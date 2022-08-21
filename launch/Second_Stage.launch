@@ -1,0 +1,12 @@
+<launch>
+    <!--    載入參數   -->
+    <rosparam file="$(find TEL_robot)/script/Second_Stage/parameter.yaml" />
+
+    <!--   啟動節點   -->
+    <node
+        name="keyboard_subscriber"
+        pkg="TEL_robot"
+        type="Keyboard_Subscriber.py"
+    />
+
+</launch>
