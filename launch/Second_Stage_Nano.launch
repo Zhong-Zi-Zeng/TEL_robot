@@ -2,11 +2,18 @@
     <!--    載入參數   -->
     <rosparam file="$(find TEL_robot)/script/Second_Stage/parameter.yaml" />
 
-    <!--   啟動節點   -->
+    <!--   啟動訂閱鍵盤節點   -->
     <node
         name="keyboard_subscriber"
         pkg="TEL_robot"
         type="Keyboard_Subscriber.py"
+    />
+
+    <!--   啟動發布影像節點   -->
+    <node
+        name="image_publisher"
+        pkg="TEL_robot"
+        type="Image_Publisher.py"
     />
 
 </launch>
