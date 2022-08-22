@@ -2,6 +2,7 @@
 
     <!--   啟動發布鍵盤節點   -->
     <node
+        output="screen"
         name="keyboard_publisher"
         pkg="TEL_robot"
         type="Keyboard_Publisher.py"
@@ -9,6 +10,7 @@
 
     <!--   啟動影像訂閱節點   -->
     <node
+        output="screen"
         name="image_subscriber"
         pkg="TEL_robot"
         type="Image_Subscriber.py"
