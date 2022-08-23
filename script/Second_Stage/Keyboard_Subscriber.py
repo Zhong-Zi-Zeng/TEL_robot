@@ -8,6 +8,8 @@ def callback(data):
     if debug:
         print(data)
 
+    # move_number = list(map(ord, data))
+    # ser.write(bytes(data))
 
 if __name__ == '__main__':
     rospy.init_node("keyboard_subscriber")

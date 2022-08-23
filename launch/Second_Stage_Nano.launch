@@ -10,7 +10,7 @@
         type="Keyboard_Subscriber.py"
     />
 
-    <!--   啟動realsense camera   -->
+    <!--   啟動realsense   -->
     <include file="$(find realsense2_camera)/launch/rs_camera.launch">
         <arg name="enable_depth" value="false"/>
     </include>
