@@ -10,12 +10,9 @@
         type="Keyboard_Subscriber.py"
     />
 
-    <!--   啟動發布影像節點   -->
-    <node
-        output="screen"
-        name="image_publisher"
-        pkg="TEL_robot"
-        type="Image_Publisher.py"
-    />
+    <!--   啟動realsense camera   -->
+    <include file="$(find realsense2_camera)/launch/rs_camera.launch">
+        <arg name="enable_depth" value="false"/>
+    </include>
 
 </launch>

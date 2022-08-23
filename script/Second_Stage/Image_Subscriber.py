@@ -14,6 +14,6 @@ def show(img_msgs):
 if __name__ == '__main__':
     rospy.init_node('image_subscriber')
     bridge = CvBridge()
-    subscriber = rospy.Subscriber('image_topic', Image, show)
+    subscriber = rospy.Subscriber('/camera/color/image_raw', Image, show)
     rospy.loginfo("Start subscriber camera...")
     rospy.spin()
