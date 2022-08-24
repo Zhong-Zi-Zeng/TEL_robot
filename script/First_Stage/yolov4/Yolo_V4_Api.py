@@ -6,7 +6,7 @@ class Detect:
         self.weight_file = './yolov4-tiny-obj_final.weights'
         self.data_file = './TEL.data'
 
-        # 載入網路
+        # load network
         self.network, self.class_names, _\
             = darknet.load_network(self.config_file, self.data_file, self.weight_file, 1)
 
