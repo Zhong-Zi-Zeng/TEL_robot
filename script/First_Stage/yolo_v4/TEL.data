@@ -1,0 +1,7 @@
+classes= 3
+train  = ./train.txt
+valid  = ./val.txt
+names = ./TEL.names
+backup = ./weights/
+
+
