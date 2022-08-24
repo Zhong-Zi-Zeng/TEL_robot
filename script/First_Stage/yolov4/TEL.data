@@ -1,7 +1,7 @@
 classes= 3
 train  = ./train.txt
 valid  = ./val.txt
-names = ./TEL.names
+names = ./yolov4/TEL.names
 backup = ./weights/
 
 

@@ -2,9 +2,9 @@ from darknet import darknet
 
 class Detect:
     def __init__(self):
-        self.config_file = './yolov4-tiny-obj.cfg'
-        self.weight_file = './yolov4-tiny-obj_final.weights'
-        self.data_file = './TEL.data'
+        self.config_file = './yolov4/yolov4-tiny-obj.cfg'
+        self.weight_file = './yolov4/yolov4-tiny-obj_final.weights'
+        self.data_file = './yolov4/TEL.data'
 
         # load network
         self.network, self.class_names, _\
