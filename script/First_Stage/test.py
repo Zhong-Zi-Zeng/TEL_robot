@@ -1,6 +1,6 @@
 import cv2
 import sys
-from yolov4.Yolo_V4_Api import Detect
+from Yolo_V4_Api import Detect
 
 
 network = Detect()

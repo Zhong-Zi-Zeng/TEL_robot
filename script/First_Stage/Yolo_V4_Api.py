@@ -1,4 +1,4 @@
-from darknet import darknet
+from yolov4.darknet import darknet
 
 class Detect:
     def __init__(self):
