@@ -1,0 +1,19 @@
+<launch>
+    <!--    載入參數   -->
+    <rosparam file="$(find TEL_robot)/script/First_Stage/parameter.yaml" />
+
+    <!--   啟動主節點   -->
+    <node
+        output="screen"
+        name="Main"
+        pkg="TEL_robot"
+        type="main.py"
+    />
+
+    <!--   啟動realsense   -->
+    <include file="$(find realsense2_camera)/launch/rs_camera.launch">
+        <arg name="enable_depth" value="true"/>
+
+    </include>
+
+</launch>
