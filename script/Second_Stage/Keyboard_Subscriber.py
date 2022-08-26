@@ -1,26 +1,26 @@
 #!/usr/bin/env python
+# -*- coding: UTF-8 -*-
 
-import rospy
-import serial
 from std_msgs.msg import String
+from script.Tools.Uart_Api import UartApi
+import rospy
 
 def callback(data):
-    if debug:
-        print(data)
+    code = data[0]
+    value = data[1:]
 
-    # move_number = list(map(ord, data))
-    # ser.write(bytes(data))
+    uart_api.send_order(direction=code, value=value)
 
 if __name__ == '__main__':
+    # 初始化
     rospy.init_node("keyboard_subscriber")
     pub = rospy.Subscriber('keyboard_topic', String, callback)
     rospy.loginfo('Start keyboard subscriber...')
 
+    uart_api = UartApi()
+
+
     # Debug
     debug = rospy.get_param('/debug')
 
-    # Init Serial
-    port = rospy.get_param('/port')
-    baudrate = rospy.get_param('/baudrate')
-    # ser = serial.Serial(port, baudrate)
     rospy.spin()

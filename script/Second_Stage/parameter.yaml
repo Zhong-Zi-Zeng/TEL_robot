@@ -1,6 +1,16 @@
-# Debug
+# ======Debug======
 debug : true
 
-# Second Stage Parameter
+# ======Keyboard order======
+Keyboard : {
+  up : {code : 'w', value : 128},  # Front
+  down : {code : 's', value : 128},# Back
+  left : {code : 'a', value : 128},# Pan left
+  right : {code : 'd', value : 128},# Pan right
+  p_circle : {code : 'm', value : 128},# Positive circle
+  n_circle : {code : 'n', value : 128},# Negative circle
+}
+
+# ======Serial parameter======
 port : '/dev/ttyACM0'
-baudrate : 9600
+baudrate : 115200
