@@ -221,7 +221,7 @@ if os.name == "nt":
             lib = CDLL(winGPUdll, RTLD_GLOBAL)
             print("Environment variables indicated a CPU run, but we didn't find {}. Trying a GPU run anyway.".format(winNoGPUdll))
 else:
-    lib = CDLL("./yolov4/libdarknet.so", RTLD_GLOBAL)
+    lib = CDLL("/home/heng/catkin_ws/src/TEL_robot/script/First_Stage/yolov4/libdarknet.so", RTLD_GLOBAL)
 
 
 

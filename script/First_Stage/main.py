@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: UTF-8 -*-
 from Yolo_V4_Api import Detect
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
@@ -6,7 +7,7 @@ import cv2
 import rospy
 
 
-# =====影像回調函式=====
+# =====Image callback function=====
 def img_callback(img_msgs):
     img = bridge.imgmsg_to_cv2(img_msgs, 'bgr8')
     detections = network.detect_image(img)
@@ -21,6 +22,7 @@ def img_callback(img_msgs):
 
 if __name__ == '__main__':
     network = Detect()
+    rospy.init_node('main')
 
     # 訂閱影像節點
     bridge = CvBridge()

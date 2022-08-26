@@ -1,7 +1,7 @@
 classes= 3
 train  = ./train.txt
 valid  = ./val.txt
-names = ./yolov4/TEL.names
+names = /home/heng/catkin_ws/src/TEL_robot/script/First_Stage/yolov4/TEL.names
 backup = ./weights/
 
 
