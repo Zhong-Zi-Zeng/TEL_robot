@@ -12,5 +12,5 @@ Keyboard : {
 }
 
 # ======Serial parameter======
-port : '/dev/ttyACM0'
+port : '/dev/ttyTHS1'
 baudrate : 115200

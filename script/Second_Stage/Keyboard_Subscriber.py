@@ -2,10 +2,11 @@
 # -*- coding: UTF-8 -*-
 
 from std_msgs.msg import String
-from script.Tools.Uart_Api import UartApi
+from Uart_Api import UartApi
 import rospy
 
 def callback(data):
+    data = str(data)
     code = data[0]
     value = data[1:]
 
