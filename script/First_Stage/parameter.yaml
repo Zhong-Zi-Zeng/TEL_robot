@@ -1,6 +1,12 @@
 # ======Debug======
 debug: true
 
+# ======Button pin======
+Button: {
+  Level1: 13,
+  Level2: 15,
+  Level3: 19
+}
 
 
 # ======Serial parameter======
