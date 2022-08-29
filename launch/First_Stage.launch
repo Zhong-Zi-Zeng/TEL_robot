@@ -7,7 +7,7 @@
         output="screen"
         name="Main"
         pkg="TEL_robot"
-        type="main.py"
+        type="Level_manger.py"
     />
 
     <!--   啟動realsense   -->

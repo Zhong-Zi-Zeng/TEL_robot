@@ -1,5 +1,5 @@
 # ======Debug======
-debug: true
+Debug: true
 
 # ======Button pin======
 Button: {
@@ -8,7 +8,25 @@ Button: {
   Level3: 19
 }
 
+# ======Detect times limit======
+DetectLimit: 20
+
+# ======Detect distance threshold=====
+DistanceThreshold: 0.5
+
+# ======PID parameter======
+Pid: {
+  UsePid: false,
+  Kp: 0.2,
+  Ki: 0.2,
+  Kd: 0.08,
+  Target: 2 # Pixel difference distance threshold is our target
+  SampleTime: 0.1,
+  LowerLimit: -255,
+  UpperLimit: 255
+}
+
 
 # ======Serial parameter======
-port: '/dev/ttyACM0'
-baudrate: 115200
+Port: '/dev/ttyACM0'
+Baudrate: 115200

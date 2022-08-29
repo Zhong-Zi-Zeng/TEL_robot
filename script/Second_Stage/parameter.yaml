@@ -1,5 +1,5 @@
 # ======Debug======
-debug : true
+Debug : true
 
 # ======Keyboard order======
 Keyboard : {
@@ -12,5 +12,5 @@ Keyboard : {
 }
 
 # ======Serial parameter======
-port : '/dev/ttyTHS1'
-baudrate : 115200
+Port : '/dev/ttyTHS1'
+Baudrate : 115200

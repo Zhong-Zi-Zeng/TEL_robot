@@ -15,13 +15,12 @@ def callback(data):
 if __name__ == '__main__':
     # 初始化
     rospy.init_node("keyboard_subscriber")
-    pub = rospy.Subscriber('keyboard_topic', String, callback)
+    rospy.Subscriber('keyboard_topic', String, callback)
     rospy.loginfo('Start keyboard subscriber...')
 
     uart_api = UartApi()
 
-
     # Debug
-    debug = rospy.get_param('/debug')
+    debug = rospy.get_param('/Debug')
 
     rospy.spin()

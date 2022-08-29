@@ -8,8 +8,8 @@ import rospy
 class UartApi:
     def __init__(self):
         # 初始化Serial
-        self.port = rospy.get_param('/port')
-        self.baudrate = rospy.get_param('/baudrate')
+        self.port = rospy.get_param('/Port')
+        self.baudrate = rospy.get_param('/Baudrate')
         self.ser = serial.Serial(self.port, self.baudrate)
 
     # ======傳送一般指令======
