@@ -29,10 +29,8 @@ class ImageCallback:
     # 深度影像回調函式
     def _depth_img_callback(self, depth_img_msgs):
         depth_img = self.bridge.imgmsg_to_cv2(depth_img_msgs, "32FC1")
-        depth_img = np.array(depth_img , dtype=np.dtype('f8'))
-        depth_img = cv2.normalize(depth_img, depth_img, 0, 1, cv2.NORM_MINMAX)
 
-        self.depth_img_queue.append(depth_img)
+        self.depth_img_queue.append(depth_img * 0.001)
 
     def get_img(self):
         while len(self.img_queue) == 0:
