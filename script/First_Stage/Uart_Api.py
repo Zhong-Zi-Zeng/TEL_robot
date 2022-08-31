@@ -13,7 +13,7 @@ class UartApi:
         self.ser = serial.Serial(self.port, self.baudrate)
 
     # ======傳送一般指令======
-    def send_order(self, direction, value='0', degree='0', motor_1='0', motor_2='0'):
+    def send_order(self, direction='0', value='0', degree='0', motor_1='0', motor_2='0'):
         assert isinstance(direction, str), 'Argument direction type is not str'
         assert isinstance(value, str), 'Argument value type is not str'
         assert isinstance(degree, str), 'Argument degree type is not str'
@@ -40,8 +40,11 @@ class UartApi:
         self.ser.write(bytes(order))
 
         # 等待arduino回覆
-        while self.ser.in_waiting:
-            response = str(self.ser.read().decode('utf-8'))
+        while True:
+            while self.ser.in_waiting:
+                response = str(self.ser.read().decode('utf-8'))
 
-            if response == 'a':
-                return
+                if response == 'a':
+                    return True
+                else:
+                    return False

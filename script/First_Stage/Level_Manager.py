@@ -31,9 +31,9 @@ class LevelManager:
         self.level3 = Level3(img_queue=self.img_queue)
 
         # 監聽按鈕
-        self.listen_buttin()
+        self.listen_button()
 
-    def listen_buttin(self):
+    def listen_button(self):
         while not rospy.is_shutdown():
 
             # 判斷關卡按鈕有沒有被按下

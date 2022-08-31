@@ -8,11 +8,19 @@ Button: {
   Level3: 19
 }
 
-# ======Detect times limit======
-DetectLimit: 20
+# ======For Find TEL======
+DetectLimit: 20 # Detect times limit
+DistanceThreshold: 0.5 # Detect distance threshold
+TurnDegree: 45 # When can't detect TEL the robot will turn this degree
+HorMiddlePoint: 320 # Camera horizontal middle point for align cube
+VerMiddlePoint: 240 # Camera vertical middle point for align cube
+HorErrorRange: 5 # Allowable horizontal error when positioning
+VerErrorRange: 5 # Allowable vertical error when positioning
+GripMotor1Degree: 40 # Grip cube motor1 degree
+GripMotor2Degree: 40 # Grip cube motor2 degree
+ReleaseMotor1Degree: 40 # Release cube motor1 degree
+ReleaseMotor2Degree: 40 # Release cube motor2 degree
 
-# ======Detect distance threshold=====
-DistanceThreshold: 0.5
 
 # ======PID parameter======
 Pid: {
@@ -25,7 +33,6 @@ Pid: {
   LowerLimit: -255,
   UpperLimit: 255
 }
-
 
 # ======Serial parameter======
 Port: '/dev/ttyACM0'
