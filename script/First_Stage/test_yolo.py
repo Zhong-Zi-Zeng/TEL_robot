@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: UTF-8 -*-
+
 from Yolo_V4_Api import Detect
 from Image_Callback import ImageCallback
 import rospy
