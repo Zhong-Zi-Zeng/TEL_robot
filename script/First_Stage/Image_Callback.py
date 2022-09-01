@@ -3,8 +3,6 @@
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 from collections import deque
-import numpy as np
-import cv2
 import rospy
 
 class ImageCallback:
