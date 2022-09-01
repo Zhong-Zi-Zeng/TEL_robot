@@ -16,7 +16,6 @@ class ImageCallback:
         rospy.init_node('subscribe_image')
         rospy.Subscriber('/camera/color/image_raw', Image, self._img_callback)
         rospy.Subscriber('/camera/aligned_depth_to_color/image_raw', Image, self._depth_img_callback)
-        rospy.spin()
 
     # RGB影像回調函式
     def _img_callback(self, img_msgs):
