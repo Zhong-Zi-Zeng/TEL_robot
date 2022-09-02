@@ -3,7 +3,7 @@ from yolov4.darknet import darknet
 class Detect:
     def __init__(self):
         self.config_file = '/home/heng/catkin_ws/src/TEL_robot/script/First_Stage/yolov4/yolov4-tiny-obj.cfg'
-        self.weight_file = '/home/heng/catkin_ws/src/TEL_robot/script/First_Stage/yolov4/yolov4-tiny-obj_final.weights'
+        self.weight_file = '/home/heng/catkin_ws/src/TEL_robot/script/First_Stage/yolov4/yolov4-tiny-obj_10000.weights'
         self.data_file = '/home/heng/catkin_ws/src/TEL_robot/script/First_Stage/yolov4/TEL.data'
 
         # load network
