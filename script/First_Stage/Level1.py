@@ -24,6 +24,7 @@ class Level1:
 
         # 載入參數
         self.detect_limit = rospy.get_param('/DetectLimit')  # 檢測次數上限
+        self.velocity_baseline = rospy.get_param('/VelocityBaseline')  # 最低速度基準線
         self.distance_threshold = rospy.get_param('/DistanceThreshold')  # 檢測最遠離閥值
         self.turn_degree = rospy.get_param('/TurnDegree')  # 找不到方框時調整機器人的角度
         self.hor_middle_point = rospy.get_param('/HorMiddlePoint')  # 水平中心點
@@ -77,23 +78,25 @@ class Level1:
             detections = self.network.detect_image(img)
 
             for label, _, bbox in detections:
-                x, y, w, h = bbox
+                c_x, c_y, w, h = bbox
                 # 如果有重複的話只存放離機身較近的那點
                 if label in detect_temp.keys():
-                    detect_temp[label] = [x, y, w, h] if y > detect_temp[label][1] else detect_temp[label]
+                    detect_temp[label] = [c_x, c_y, w, h] if c_y > detect_temp[label][1] else detect_temp[label]
                 else:
-                    detect_temp[label] = [x, y, w, h]
+                    detect_temp[label] = [c_x, c_y, w, h]
 
         return detect_temp
 
     # =====判斷物體距離是否大於閥值，若大於閥值則去除掉=====
     def _filter_detect_temp(self, detect_temp):
-        for label in detect_temp.keys():
-            distance = self._get_distance(detect_temp[label])
-            if distance > self.distance_threshold:
-                del detect_temp[label]
+        copy_detect_temp = detect_temp.copy()
 
-        return detect_temp
+        for key in detect_temp.keys():
+            distance = self._get_distance(c_x=detect_temp[key][0], c_y=detect_temp[key][1])
+            if distance > self.distance_threshold:
+                del copy_detect_temp[key]
+
+        return copy_detect_temp
 
     # =====校正機器人角度=====
     def _correction_robot(self):
@@ -116,32 +119,35 @@ class Level1:
     # =====定位機器人=====
     def _localization_robot(self, detect_temp):
 
-        for char in detect_temp.keys:
+        for char in detect_temp.keys():
             while True:
                 now_detect = self._find_TEL()
 
                 try:
-                    x, y, w, h = now_detect[char]
-                    distance = self._get_distance(now_detect[char])
-                    c_x = x + w / 2
+                    c_x, c_y, w, h = now_detect[char]
+                    distance = self._get_distance(c_x, c_y)
 
                     # 判斷左右是否需要調整
                     if not self.hor_middle_point - self.hor_error_range <= c_x <= self.hor_middle_point + self.hor_error_range:
                         if c_x > self.hor_middle_point:
-                            self.uart_api.send_order(direction='d', value=str(abs(self.hor_middle_point - c_x)))
+                            self.uart_api.send_order(direction='d', value=str(
+                                abs(self.hor_middle_point - c_x) + self.velocity_baseline))
                         else:
-                            self.uart_api.send_order(direction='a', value=str(abs(self.hor_middle_point - c_x)))
+                            self.uart_api.send_order(direction='a', value=str(
+                                abs(self.hor_middle_point - c_x) + self.velocity_baseline))
                     # 判斷前後是否需要調整
                     elif not self.ver_middle_point - self.ver_error_range <= distance <= self.ver_middle_point + self.ver_error_range:
                         if distance > self.ver_middle_point:
-                            self.uart_api.send_order(direction='s', value=str(abs(self.hor_middle_point - distance)))
+                            self.uart_api.send_order(direction='s', value=str(
+                                abs(self.hor_middle_point - distance) + self.velocity_baseline))
                         else:
-                            self.uart_api.send_order(direction='w', value=str(abs(self.hor_middle_point - distance)))
-                    # 夾取方塊
+                            self.uart_api.send_order(direction='w', value=str(
+                                abs(self.hor_middle_point - distance) + self.velocity_baseline))
+                    # 夾取方塊，若夾取到則把此字母狀態改為True
                     else:
                         successfully = self._grip_cube()
                         if not successfully:
-                            continue
+                            self.TEL_state[char] = True
                         else:
                             break
                 except:
@@ -168,15 +174,7 @@ class Level1:
         self.uart_api.send_special_order(action='b')
 
     # =====取得與方塊間的距離=====
-    def _get_distance(self, bbox):
-        """
-        :param bbox: 偵測方框
-        :return distance: 單位(m)
-        """
-        x, y, w, h = bbox
-        c_x = x + w // 2
-        c_y = y + h // 2
-
+    def _get_distance(self, c_x, c_y):
         depth_img = self.img_queue.get_depth_img()
         distance = depth_img[c_x, c_y]
 

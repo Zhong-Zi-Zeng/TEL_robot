@@ -10,7 +10,8 @@ Button: {
 
 # ======For Find TEL======
 DetectLimit: 20 # Detect times limit
-DistanceThreshold: 0.5 # Detect distance threshold
+VelocityBaseline: 30 # Velocity lower limit
+DistanceThreshold: 0.35 # Detect distance threshold
 TurnDegree: 45 # When can't detect TEL the robot will turn this degree
 HorMiddlePoint: 320 # Camera horizontal middle point for align cube
 VerMiddlePoint: 240 # Camera vertical middle point for align cube
