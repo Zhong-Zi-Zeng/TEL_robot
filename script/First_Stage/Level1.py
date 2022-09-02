@@ -167,6 +167,7 @@ class Level1:
         # 釋放方塊
         self.uart_api.send_special_order(action='b')
 
+    # =====取得與方塊間的距離=====
     def _get_distance(self, bbox):
         """
         :param bbox: 偵測方框
