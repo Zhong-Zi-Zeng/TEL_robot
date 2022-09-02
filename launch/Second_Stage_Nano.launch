@@ -10,6 +10,14 @@
         type="Keyboard_Subscriber.py"
     />
 
+    <!--  設定uart為可執行  -->
+    <node
+        output="screen"
+        name="set_uart"
+        pkg="TEL_robot"
+        type="set_uart.sh "
+    />
+
     <!--   啟動realsense   -->
     <include file="$(find realsense2_camera)/launch/rs_camera.launch">
         <arg name="enable_depth" value="false"/>
