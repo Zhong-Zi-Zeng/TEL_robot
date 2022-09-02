@@ -20,6 +20,6 @@ class Detect:
         darknet.copy_image_from_bytes(self.darknet_img, img.tobytes())
 
         # Detect image
-        detections = darknet.detect_image(self.network, self.class_names, self.darknet_img, thresh=0.5, nms=0.6)
+        detections = darknet.detect_image(self.network, self.class_names, self.darknet_img, thresh=0.5, nms=0.45)
 
         return detections
