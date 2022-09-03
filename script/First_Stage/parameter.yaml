@@ -1,5 +1,7 @@
 # ======Debug======
 Debug: true
+TestMode: true
+TestLevel: 1
 
 # ======Button pin======
 Button: {
@@ -10,30 +12,18 @@ Button: {
 
 # ======For Find TEL======
 DetectLimit: 20 # Detect times limit
-VelocityBaseline: 30 # Velocity lower limit
+VelocityBaseline: 50 # Velocity lower limit
 DistanceThreshold: 0.35 # Detect distance threshold
 TurnDegree: 45 # When can't detect TEL the robot will turn this degree
-HorMiddlePoint: 320 # Camera horizontal middle point for align cube
-VerMiddlePoint: 240 # Camera vertical middle point for align cube
-HorErrorRange: 5 # Allowable horizontal error when positioning
-VerErrorRange: 5 # Allowable vertical error when positioning
+HorMiddlePoint: 340 # Camera horizontal middle point for align cube
+VerMiddlePoint: 290 # Camera vertical middle point for align cube
+HorErrorRange: 3 # Allowable horizontal error when positioning
+VerErrorRange: 3 # Allowable vertical error when positioning
 GripMotor1Degree: 40 # Grip cube motor1 degree
 GripMotor2Degree: 40 # Grip cube motor2 degree
 ReleaseMotor1Degree: 40 # Release cube motor1 degree
 ReleaseMotor2Degree: 40 # Release cube motor2 degree
 
-
-# ======PID parameter======
-Pid: {
-  UsePid: false,
-  Kp: 0.2,
-  Ki: 0.2,
-  Kd: 0.08,
-  Target: 2 # Pixel difference distance threshold is our target
-  SampleTime: 0.1,
-  LowerLimit: -255,
-  UpperLimit: 255
-}
 
 # ======Serial parameter======
 Port: '/dev/ttyACM0'

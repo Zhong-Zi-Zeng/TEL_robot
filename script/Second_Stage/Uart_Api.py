@@ -39,9 +39,11 @@ class UartApi:
         order = list(map(ord, order))
         self.ser.write(bytes(order))
 
-        # 等待arduino回覆
         while self.ser.in_waiting:
             response = str(self.ser.read().decode('utf-8'))
 
             if response == 'a':
-                return
+                return True
+            else:
+                return False
+

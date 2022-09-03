@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 from Yolo_V4_Api import Detect
-from simple_pid import PID
 from Uart_Api import UartApi
 import rospy
 import time
@@ -18,11 +17,8 @@ class Level1:
         # 初始化Uart Api
         self.uart_api = UartApi()
 
-        # 初始化PID
-        if rospy.get_param('/Pid/UsePid'):
-            self.pid, self.sampleTime = self._init_pid()
-
         # 載入參數
+        self.debug = rospy.get_param('/Debug')  # Debug模式
         self.detect_limit = rospy.get_param('/DetectLimit')  # 檢測次數上限
         self.velocity_baseline = rospy.get_param('/VelocityBaseline')  # 最低速度基準線
         self.distance_threshold = rospy.get_param('/DistanceThreshold')  # 檢測最遠離閥值
@@ -40,38 +36,33 @@ class Level1:
         self.now_direction = 'front'  # 紀錄當前機器人方向
         self.TEL_state = {'T': False, 'E': False, 'L': False}  # 紀錄TEL文字目前是否已經被夾取
 
-    # =====初始化PID=====
-    def _init_pid(self):
-        kp = rospy.get_param('/Pid/Kp')
-        ki = rospy.get_param('/Pid/Ki')
-        kd = rospy.get_param('/Pid/Kd')
-        target = rospy.get_param('/Pid/Target')
-        sampleTime = rospy.get_param('/Pid/SampleTime')
-        lowerLimit = rospy.get_param('/Pid/LowerLimit')
-        upperLimit = rospy.get_param('/Pid/UpperLimit')
-
-        return PID(kp, ki, kd, setpoint=target, output_limits=(lowerLimit, upperLimit)), sampleTime
-
     def start(self):
         # 尋找有無TEL
         detect_temp = self._find_TEL()
+
+        # 過濾掉太遠的物體
+        detect_temp = self._filter_detect_temp(detect_temp)
 
         # 偵測達到上限後若暫存區依舊為空則先將機器人往左擺動後重新判斷
         # 還是為空再向右擺動判斷，還是為空則將機器人定位到方框後
         if not detect_temp:
             self._correction_robot()
             self.start()
-            return
-
-        # 過濾掉太遠的物體
-        detect_temp = self._filter_detect_temp(detect_temp)
+            return True
 
         # 按照順序進行定位
         self._localization_robot(detect_temp)
 
+        # 判斷是否還有文字方塊未被夾取
+        if False in self.TEL_state.values():
+            self.start()
+
     # =====尋找有無TEL=====
     def _find_TEL(self):
         detect_temp = {}
+
+        if self.debug:
+            print('Find TEL....')
 
         for i in range(self.detect_limit):
             img = self.img_queue.get_img()
@@ -85,21 +76,34 @@ class Level1:
                 else:
                     detect_temp[label] = [c_x, c_y, w, h]
 
+        if self.debug:
+            print('Find result:', detect_temp.keys())
+
         return detect_temp
 
     # =====判斷物體距離是否大於閥值，若大於閥值則去除掉=====
     def _filter_detect_temp(self, detect_temp):
         copy_detect_temp = detect_temp.copy()
 
+        if self.debug:
+            print('Original detect temp:', detect_temp)
+            print('Filter out the too-far cube.')
+
         for key in detect_temp.keys():
             distance = self._get_distance(c_x=detect_temp[key][0], c_y=detect_temp[key][1])
             if distance > self.distance_threshold:
                 del copy_detect_temp[key]
 
+        if self.debug:
+            print('Now detect temp:', copy_detect_temp)
+
         return copy_detect_temp
 
     # =====校正機器人角度=====
     def _correction_robot(self):
+        if self.debug:
+            print('Can not find TEL, modify robot direction.')
+
         # 向右轉
         if self.now_direction == 'front':
             self.uart_api.send_order(degree=self.turn_degree)
@@ -118,38 +122,48 @@ class Level1:
 
     # =====定位機器人=====
     def _localization_robot(self, detect_temp):
-
         for char in detect_temp.keys():
-            while True:
+            successfully = False
+
+            if self.debug:
+                print('Gripping {} cube'.format(char))
+
+            while not successfully:
                 now_detect = self._find_TEL()
 
                 try:
                     c_x, c_y, w, h = now_detect[char]
-                    distance = self._get_distance(c_x, c_y)
 
                     # 判斷左右是否需要調整
                     if not self.hor_middle_point - self.hor_error_range <= c_x <= self.hor_middle_point + self.hor_error_range:
                         if c_x > self.hor_middle_point:
                             self.uart_api.send_order(direction='d', value=str(
                                 abs(self.hor_middle_point - c_x) + self.velocity_baseline))
+                            if self.debug:
+                                print('Move Right')
                         else:
                             self.uart_api.send_order(direction='a', value=str(
                                 abs(self.hor_middle_point - c_x) + self.velocity_baseline))
+                            if self.debug:
+                                print('Move Left')
                     # 判斷前後是否需要調整
-                    elif not self.ver_middle_point - self.ver_error_range <= distance <= self.ver_middle_point + self.ver_error_range:
-                        if distance > self.ver_middle_point:
+                    elif not self.ver_middle_point - self.ver_error_range <= c_y <= self.ver_middle_point + self.ver_error_range:
+                        if c_y > self.ver_middle_point:
                             self.uart_api.send_order(direction='s', value=str(
-                                abs(self.hor_middle_point - distance) + self.velocity_baseline))
+                                abs(self.hor_middle_point - c_y) + self.velocity_baseline))
+                            if self.debug:
+                                print('Move Back')
                         else:
                             self.uart_api.send_order(direction='w', value=str(
-                                abs(self.hor_middle_point - distance) + self.velocity_baseline))
+                                abs(self.hor_middle_point - c_y) + self.velocity_baseline))
+                            if self.debug:
+                                print('Move Front')
                     # 夾取方塊，若夾取到則把此字母狀態改為True
                     else:
+                        if self.debug:
+                            print('Positioning completed start grip {}'.format(char))
                         successfully = self._grip_cube()
-                        if not successfully:
-                            self.TEL_state[char] = True
-                        else:
-                            break
+                        self.TEL_state[char] = True
                 except:
                     pass
 
@@ -157,9 +171,13 @@ class Level1:
     def _grip_cube(self):
         # 將爪子定位到吸取位置
         self.uart_api.send_order(motor_1=str(self.grip_motor1_degree), motor_2=str(self.grip_motor2_degree))
+        if self.debug:
+            print('Positioning arm...')
         time.sleep(0.5)
 
         # 吸取方塊
+        if self.debug:
+            print('Gripping cube...')
         successfully = self.uart_api.send_special_order(action='a')
 
         # 沒有成功吸取則重新定位
@@ -168,10 +186,16 @@ class Level1:
 
         # 將爪子定位到放料位置
         self.uart_api.send_order(motor_1=str(self.release_motor1_degree), motor_2=str(self.release_motor2_degree))
+        if self.debug:
+            print('Positioning arm...')
         time.sleep(0.5)
 
         # 釋放方塊
+        if self.debug:
+            print('Put down cube')
         self.uart_api.send_special_order(action='b')
+
+        return True
 
     # =====取得與方塊間的距離=====
     def _get_distance(self, c_x, c_y):

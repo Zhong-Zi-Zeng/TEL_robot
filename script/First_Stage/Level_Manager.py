@@ -20,6 +20,10 @@ class LevelManager:
         # 初始化影像佇列物件
         self.img_queue = ImageCallback()
 
+        # Test mode
+        self.test_mode = rospy.get_param('/TestMode')
+        self.test_level = rospy.get_param('/TestLevel')
+
         # 關卡紀錄
         self.level1_finish = False
         self.level2_finish = False
@@ -30,12 +34,19 @@ class LevelManager:
         self.level2 = Level2(img_queue=self.img_queue)
         self.level3 = Level3(img_queue=self.img_queue)
 
-        # 監聽按鈕
-        self.listen_button()
+        # 判斷是否是測試模式
+        if not self.test_mode:
+            self.listen_button()
+        elif self.test_level == 1:
+            self.level1.start()
+        elif self.test_level == 2:
+            self.level2.start()
+        else:
+            self.level3.start()
+
 
     def listen_button(self):
         while not rospy.is_shutdown():
-
             # 判斷關卡按鈕有沒有被按下
             if self.button_manger.read_level1_start():
                 if self.level1_finish == False:
