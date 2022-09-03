@@ -40,7 +40,7 @@ class Level1:
         # 尋找有無TEL
         detect_temp = self._find_TEL()
 
-        # 過濾掉太遠的物體
+        # 過濾掉太遠的方塊、已經夾到的方塊
         detect_temp = self._filter_detect_temp(detect_temp)
 
         # 偵測達到上限後若暫存區依舊為空則先將機器人往左擺動後重新判斷
@@ -69,7 +69,8 @@ class Level1:
             detections = self.network.detect_image(img)
 
             for label, _, bbox in detections:
-                c_x, c_y, w, h = bbox
+                c_x, c_y, w, h = list(map(int, bbox))
+
                 # 如果有重複的話只存放離機身較近的那點
                 if label in detect_temp.keys():
                     detect_temp[label] = [c_x, c_y, w, h] if c_y > detect_temp[label][1] else detect_temp[label]
@@ -91,7 +92,7 @@ class Level1:
 
         for key in detect_temp.keys():
             distance = self._get_distance(c_x=detect_temp[key][0], c_y=detect_temp[key][1])
-            if distance > self.distance_threshold:
+            if distance > self.distance_threshold or key:
                 del copy_detect_temp[key]
 
         if self.debug:
@@ -200,6 +201,6 @@ class Level1:
     # =====取得與方塊間的距離=====
     def _get_distance(self, c_x, c_y):
         depth_img = self.img_queue.get_depth_img()
-        distance = depth_img[c_x, c_y]
+        distance = depth_img[c_y, c_x]
 
         return distance

@@ -17,8 +17,8 @@ DistanceThreshold: 0.35 # Detect distance threshold
 TurnDegree: 45 # When can't detect TEL the robot will turn this degree
 HorMiddlePoint: 340 # Camera horizontal middle point for align cube
 VerMiddlePoint: 290 # Camera vertical middle point for align cube
-HorErrorRange: 3 # Allowable horizontal error when positioning
-VerErrorRange: 3 # Allowable vertical error when positioning
+HorErrorRange: 5 # Allowable horizontal error when positioning
+VerErrorRange: 5 # Allowable vertical error when positioning
 GripMotor1Degree: 40 # Grip cube motor1 degree
 GripMotor2Degree: 40 # Grip cube motor2 degree
 ReleaseMotor1Degree: 40 # Release cube motor1 degree
@@ -26,5 +26,5 @@ ReleaseMotor2Degree: 40 # Release cube motor2 degree
 
 
 # ======Serial parameter======
-Port: '/dev/ttyACM0'
+Port: '/dev/ttyTHS1'
 Baudrate: 115200

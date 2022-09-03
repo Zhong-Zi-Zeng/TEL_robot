@@ -6,9 +6,6 @@ from Image_Callback import ImageCallback
 from Level1 import Level1
 from Level2 import Level2
 from Level3 import Level3
-from cv_bridge import CvBridge
-from sensor_msgs.msg import Image
-import cv2
 import rospy
 
 
