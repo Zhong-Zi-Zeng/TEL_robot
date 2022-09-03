@@ -64,18 +64,17 @@ class Level1:
         if self.debug:
             print('Find TEL....')
 
-        for i in range(self.detect_limit):
-            img = self.img_queue.get_img()
-            detections = self.network.detect_image(img)
+        img = self.img_queue.get_img()
+        detections = self.network.detect_image(img)
 
-            for label, _, bbox in detections:
-                c_x, c_y, w, h = list(map(int, bbox))
+        for label, _, bbox in detections:
+            c_x, c_y, w, h = list(map(int, bbox))
 
-                # 如果有重複的話只存放離機身較近的那點
-                if label in detect_temp.keys():
-                    detect_temp[label] = [c_x, c_y, w, h] if c_y > detect_temp[label][1] else detect_temp[label]
-                else:
-                    detect_temp[label] = [c_x, c_y, w, h]
+            # 如果有重複的話只存放離機身較近的那點
+            if label in detect_temp.keys():
+                detect_temp[label] = [c_x, c_y, w, h] if c_y > detect_temp[label][1] else detect_temp[label]
+            else:
+                detect_temp[label] = [c_x, c_y, w, h]
 
         if self.debug:
             print('Find result:', detect_temp.keys())
@@ -92,7 +91,7 @@ class Level1:
 
         for key in detect_temp.keys():
             distance = self._get_distance(c_x=detect_temp[key][0], c_y=detect_temp[key][1])
-            if distance > self.distance_threshold or key:
+            if distance > self.distance_threshold or self.TEL_state[key]:
                 del copy_detect_temp[key]
 
         if self.debug:
@@ -107,11 +106,11 @@ class Level1:
 
         # 向右轉
         if self.now_direction == 'front':
-            self.uart_api.send_order(degree=self.turn_degree)
+            self.uart_api.send_order(degree=str(self.turn_degree))
             self.now_direction = 'right'
         # 向左轉
         elif self.now_direction == 'right':
-            self.uart_api.send_order(degree=-self.turn_degree * 2)
+            self.uart_api.send_order(degree=str(-self.turn_degree * 2))
             self.now_direction = 'left'
         # 定位到方框後
         else:
