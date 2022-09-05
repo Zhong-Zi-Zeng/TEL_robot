@@ -25,10 +25,9 @@ class UartApi:
         motor_1 = motor_1.zfill(3)
         motor_2 = motor_2.zfill(3)
 
-        order = '[' + direction + value + degree + motor_1 + motor_2 + ']'
+        order = '<' + direction + value + degree + motor_1 + motor_2 + '>'
         order = list(map(ord, order))
-        print(order)
-        self.ser.write(bytes(order))
+        self.ser.write(order)
 
     # ======傳送特殊指令======
     def send_special_order(self, action):
@@ -46,4 +45,3 @@ class UartApi:
                 return True
             else:
                 return False
-

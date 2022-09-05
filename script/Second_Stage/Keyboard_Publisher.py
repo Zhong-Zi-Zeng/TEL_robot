@@ -5,6 +5,7 @@ from pynput.keyboard import Key
 from pynput.keyboard import Listener
 from std_msgs.msg import String
 
+
 class KeyboardManger:
     def __init__(self):
         self.KEYBOARD_DICT = self._initial_keyboard_dict()
@@ -52,11 +53,16 @@ class KeyboardManger:
                 rospy.loginfo('Press Esc')
                 return False
 
+    # ======當鍵盤被放開時======
+    def keyboard_release(self, key):
+        self._send_keyboard(code='p', value=0)
+
     # ======發布話題======
     def _send_keyboard(self, code: str, value: int):
         order = code + str(value)
 
         pub.publish(order)
+
 
 if __name__ == '__main__':
     # 初始化
@@ -67,5 +73,5 @@ if __name__ == '__main__':
     # 監聽鍵盤
     rospy.loginfo('Start listener keyboard...')
     rospy.loginfo('Press ESC exit.')
-    with Listener(on_press=keyboard_manger.keyboard_press) as listener:
+    with Listener(on_press=keyboard_manger.keyboard_press, on_release=keyboard_manger.keyboard_release) as listener:
         listener.join()

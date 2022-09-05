@@ -12,5 +12,5 @@ Keyboard : {
 }
 
 # ======Serial parameter======
-Port : '/dev/ttyTHS1'
+Port : '/dev/ttyACM0'
 Baudrate : 115200

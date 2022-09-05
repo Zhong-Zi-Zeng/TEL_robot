@@ -6,9 +6,8 @@ from Uart_Api import UartApi
 import rospy
 
 def callback(data):
-    data = str(data)
-    code = data[0]
-    value = data[1:]
+    code = data.data[0]
+    value = data.data[1:]
 
     uart_api.send_order(direction=code, value=value)
 
