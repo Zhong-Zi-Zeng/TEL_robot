@@ -25,7 +25,7 @@ class UartApi:
         motor_1 = motor_1.zfill(3)
         motor_2 = motor_2.zfill(3)
 
-        order = '<' + direction + value + degree + motor_1 + motor_2 + '>'
+        order = '<' + direction + value + degree + motor_1 + motor_2
         order = list(map(ord, order))
         self.ser.write(order)
 
@@ -34,7 +34,7 @@ class UartApi:
         assert isinstance(action, str), 'Argument value type not str'
         assert isinstance(action, str), 'Argument value type not str'
 
-        order = '<' + action + '>'
+        order = '<' + action
         order = list(map(ord, order))
         self.ser.write(bytes(order))
 
