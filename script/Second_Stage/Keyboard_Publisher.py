@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
+
 import rospy
+from threading import Thread
 from pynput.keyboard import Key
 from pynput.keyboard import Listener
 from std_msgs.msg import String
@@ -9,28 +11,35 @@ from std_msgs.msg import String
 class KeyboardManger:
     def __init__(self):
         self.KEYBOARD_DICT = self._initial_keyboard_dict()
+        self.motor0_base = rospy.get_param('/Keyboard/motor0_base')
+        self.motor1_base = rospy.get_param('/Keyboard/motor1_base')
+        self.direction = 'p'
+        self.speed = '0'
+
+        # 利用子執行序不斷發布消息
+        Thread(target=self._send_keyboard).start()
 
     def _initial_keyboard_dict(self):
 
         keyboard_dict = {
             # 前
-            'w': {'code': rospy.get_param('/Keyboard/up/code'),
-                  'value': rospy.get_param('/Keyboard/up/value')},
+            'w': {'direction': rospy.get_param('/Keyboard/up/direction'),
+                  'speed': rospy.get_param('/Keyboard/up/speed')},
             # 後
-            's': {'code': rospy.get_param('/Keyboard/down/code'),
-                  'value': rospy.get_param('/Keyboard/down/value')},
+            's': {'direction': rospy.get_param('/Keyboard/down/direction'),
+                  'speed': rospy.get_param('/Keyboard/down/speed')},
             # 平移左
-            'a': {'code': rospy.get_param('/Keyboard/left/code'),
-                  'value': rospy.get_param('/Keyboard/left/value')},
+            'a': {'direction': rospy.get_param('/Keyboard/left/direction'),
+                  'speed': rospy.get_param('/Keyboard/left/speed')},
             # 平移右
-            'd': {'code': rospy.get_param('/Keyboard/right/code'),
-                  'value': rospy.get_param('/Keyboard/right/value')},
+            'd': {'direction': rospy.get_param('/Keyboard/right/direction'),
+                  'speed': rospy.get_param('/Keyboard/right/speed')},
             # 順時針轉
-            'e': {'code': rospy.get_param('/Keyboard/p_circle/code'),
-                  'value': rospy.get_param('/Keyboard/p_circle/value')},
+            'e': {'direction': rospy.get_param('/Keyboard/p_circle/direction'),
+                  'speed': rospy.get_param('/Keyboard/p_circle/speed')},
             # 逆時針
-            'q': {'code': rospy.get_param('/Keyboard/n_circle/code'),
-                  'value': rospy.get_param('/Keyboard/n_circle/value')},
+            'q': {'direction': rospy.get_param('/Keyboard/n_circle/direction'),
+                  'speed': rospy.get_param('/Keyboard/n_circle/speed')},
         }
 
         return keyboard_dict
@@ -40,14 +49,17 @@ class KeyboardManger:
         try:
             # 按下一般按鍵
             if key.char in self.KEYBOARD_DICT.keys():
-                self._send_keyboard(code=self.KEYBOARD_DICT[key.char]['code'],
-                                    value=self.KEYBOARD_DICT[key.char]['value'])
+                self.direction = self.KEYBOARD_DICT[key.char]['direction']
+                self.speed = self.KEYBOARD_DICT[key.char]['speed']
 
         # 按下一般特殊按鍵
         except AttributeError:
             if key in self.KEYBOARD_DICT.keys():
-                self._send_keyboard(code=self.KEYBOARD_DICT[key.char]['code'],
-                                    value=self.KEYBOARD_DICT[key.char]['value'])
+                self.motor1_base += 1 if key == Key.up else self.motor1_base
+                self.motor1_base -= 1 if key == Key.down else self.motor1_base
+                self.motor0_base += 1 if key == Key.left else self.motor0_base
+                self.motor0_base -= 1 if key == Key.right else self.motor0_base
+
             # 按下esc鍵
             elif key == Key.esc:
                 rospy.loginfo('Press Esc')
@@ -55,13 +67,14 @@ class KeyboardManger:
 
     # ======當鍵盤被放開時======
     def keyboard_release(self, key):
-        self._send_keyboard(code='p', value=0)
+        self.direction = 'p'
+        self.speed = 0
 
     # ======發布話題======
-    def _send_keyboard(self, code: str, value: int):
-        order = code + str(value)
-
-        pub.publish(order)
+    def _send_keyboard(self):
+        while not rospy.is_shutdown():
+            order = [self.direction, str(self.speed), str(self.motor0_base), str(self.motor1_base)]
+            pub.publish(','.join(order))
 
 
 if __name__ == '__main__':

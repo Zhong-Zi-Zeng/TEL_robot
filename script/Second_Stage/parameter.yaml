@@ -3,12 +3,15 @@ Debug : true
 
 # ======Keyboard order======
 Keyboard : {
-  up : {code : 'w', value : 128},  # Front
-  down : {code : 's', value : 128},# Back
-  left : {code : 'a', value : 128},# Pan left
-  right : {code : 'd', value : 128},# Pan right
-  p_circle : {code : 'm', value : 128},# Positive circle
-  n_circle : {code : 'n', value : 128},# Negative circle
+  up : {direction : 'w', speed : 128},  # Front
+  down : {direction : 's', speed : 128},# Back
+  left : {direction : 'a', speed : 128},# Pan left
+  right : {direction : 'd', speed : 128},# Pan right
+  p_circle : {direction : 'm', speed : 128},# Positive circle
+  n_circle : {direction : 'n', speed : 128},# Negative circle
+  motor0_base : 40, # motor0 initial degree
+  motor1_base : 40  # motor1 initial degree
+
 }
 
 # ======Serial parameter======
