@@ -4,7 +4,6 @@
 import serial
 import rospy
 
-
 class UartApi:
     def __init__(self):
         # debug
@@ -29,18 +28,18 @@ class UartApi:
         motor_1 = motor_1.zfill(3)
         motor_2 = motor_2.zfill(3)
 
-        order = '[' + direction + value + degree + motor_1 + motor_2 + ']'
+        order = '[' + direction + value + degree + motor_1 + motor_2
         order = list(map(ord, order))
-        self.ser.write(bytes(order))
+        self.ser.write(order)
 
     # ======傳送特殊指令======
     def send_special_order(self, action):
         assert isinstance(action, str), 'Argument value type not str'
         assert isinstance(action, str), 'Argument value type not str'
 
-        order = '<' + action + '>'
+        order = '<' + action
         order = list(map(ord, order))
-        self.ser.write(bytes(order))
+        self.ser.write(order)
 
         # 測試模式下直接回傳True
         if self.test_mode:

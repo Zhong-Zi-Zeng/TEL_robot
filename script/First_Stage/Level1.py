@@ -33,7 +33,7 @@ class Level1:
         self.release_motor2_degree = rospy.get_param('ReleaseMotor2Degree')  # 釋放物品時的motor2角度
 
         # 設定變數
-        self.now_direction = 'front'  # 紀錄當前機器人方向
+        self.now_direction = None  # 紀錄當前機器人方向
         self.TEL_state = {'T': False, 'E': False, 'L': False}  # 紀錄TEL文字目前是否已經被夾取
 
     def start(self):
@@ -56,6 +56,18 @@ class Level1:
         # 判斷是否還有文字方塊未被夾取
         if False in self.TEL_state.values():
             self.start()
+
+        # 定位到終點方框
+        if 'back' in self.now_direction:
+            self.uart_api.send_special_order(action='h')
+        else:
+            self.uart_api.send_special_order(action='g')
+
+        # 前往第二關
+        self.uart_api.send_special_order(action='j')
+
+        if self.debug:
+            print('Go to Level 2!')
 
     # =====尋找有無TEL=====
     def _find_TEL(self):
@@ -99,37 +111,40 @@ class Level1:
 
         return copy_detect_temp
 
-    # =====校正機器人角度=====
+    # =====校正機器人=====
     def _correction_robot(self):
         if self.debug:
             print('Can not find TEL, modify robot direction.')
 
-        # 向右轉
-        if self.now_direction == 'front':
-            self.uart_api.send_order(degree=str(self.turn_degree))
-            self.now_direction = 'right'
-        # 向左轉
-        elif self.now_direction == 'right':
-            self.uart_api.send_order(degree=str(-self.turn_degree * 2))
-            self.now_direction = 'left'
-        # 定位到方框後
-        else:
-            self.uart_api.send_special_order(action='f')
+        # 一開始定位到方框前
+        if self.now_direction is None:
+            self.uart_api.send_special_order(action='e')
             self.now_direction = 'front'
+        # 向右轉
+        elif self.now_direction == 'front' or self.now_direction == 'back':
+            self.uart_api.send_order(degree=str(self.turn_degree))
+            self.now_direction = 'right' if self.now_direction != 'back' else 'bake right'
+        # 向左轉
+        elif self.now_direction == 'right' or self.now_direction == 'bake right':
+            self.uart_api.send_order(degree=str(-self.turn_degree * 2))
+            self.now_direction = 'left' if self.now_direction != 'bake right' else 'bake left'
+        # 定位到方框後
+        elif self.now_direction != 'bake left':
+            self.uart_api.send_special_order(action='f')
+            self.now_direction = 'back'
             return
 
         self.uart_api.send_special_order(action='z')
 
-    # =====定位機器人=====
+    # =====定位機器人夾取方塊=====
     def _localization_robot(self, detect_temp):
         for char in detect_temp.keys():
             successfully = False
 
-            if self.debug:
-                print('Gripping {} cube'.format(char))
-
             while not successfully:
                 now_detect = self._find_TEL()
+                if self.debug:
+                    print('Gripping {} cube'.format(char))
 
                 try:
                     c_x, c_y, w, h = now_detect[char]
@@ -138,24 +153,24 @@ class Level1:
                     if not self.hor_middle_point - self.hor_error_range <= c_x <= self.hor_middle_point + self.hor_error_range:
                         if c_x > self.hor_middle_point:
                             self.uart_api.send_order(direction='d', value=str(
-                                abs(self.hor_middle_point - c_x) + self.velocity_baseline))
+                                abs(self.hor_middle_point - c_x)/10 + self.velocity_baseline))
                             if self.debug:
                                 print('Move Right')
                         else:
                             self.uart_api.send_order(direction='a', value=str(
-                                abs(self.hor_middle_point - c_x) + self.velocity_baseline))
+                                abs(self.hor_middle_point - c_x)/10 + self.velocity_baseline))
                             if self.debug:
                                 print('Move Left')
                     # 判斷前後是否需要調整
                     elif not self.ver_middle_point - self.ver_error_range <= c_y <= self.ver_middle_point + self.ver_error_range:
                         if c_y > self.ver_middle_point:
                             self.uart_api.send_order(direction='s', value=str(
-                                abs(self.hor_middle_point - c_y) + self.velocity_baseline))
+                                abs(self.hor_middle_point - c_y)/10 + self.velocity_baseline))
                             if self.debug:
                                 print('Move Back')
                         else:
                             self.uart_api.send_order(direction='w', value=str(
-                                abs(self.hor_middle_point - c_y) + self.velocity_baseline))
+                                abs(self.hor_middle_point - c_y)/10 + self.velocity_baseline))
                             if self.debug:
                                 print('Move Front')
                     # 夾取方塊，若夾取到則把此字母狀態改為True
@@ -169,6 +184,9 @@ class Level1:
 
     # =====夾取方塊=====
     def _grip_cube(self):
+        # 先停止機器人
+        self.uart_api.send_order(direction='p', value=str(0))
+
         # 將爪子定位到吸取位置
         self.uart_api.send_order(motor_1=str(self.grip_motor1_degree), motor_2=str(self.grip_motor2_degree))
         if self.debug:

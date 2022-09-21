@@ -2,6 +2,7 @@
 # -*- coding: UTF-8 -*-
 
 import rospy
+import time
 from threading import Thread
 from pynput.keyboard import Key
 from pynput.keyboard import Listener
@@ -15,7 +16,7 @@ class KeyboardManger:
         self.motor1_base = rospy.get_param('/Keyboard/motor1_base')
         self.direction = 'p'
         self.speed = '0'
-
+        print(self.motor0_base, self.motor1_base)
         # 利用子執行序不斷發布消息
         Thread(target=self._send_keyboard).start()
 
@@ -54,28 +55,36 @@ class KeyboardManger:
 
         # 按下一般特殊按鍵
         except AttributeError:
-            if key in self.KEYBOARD_DICT.keys():
-                self.motor1_base += 1 if key == Key.up else self.motor1_base
-                self.motor1_base -= 1 if key == Key.down else self.motor1_base
-                self.motor0_base += 1 if key == Key.left else self.motor0_base
-                self.motor0_base -= 1 if key == Key.right else self.motor0_base
+            if key == Key.up:
+                self.motor1_base += 1
+            if key == Key.down:
+                self.motor1_base -= 1
+            if key == Key.left:
+                self.motor0_base += 1
+            if key == Key.right:
+                self.motor0_base -= 1
 
             # 按下esc鍵
-            elif key == Key.esc:
+            if key == Key.esc:
                 rospy.loginfo('Press Esc')
                 return False
+        except:
+            pass
 
     # ======當鍵盤被放開時======
     def keyboard_release(self, key):
-        self.direction = 'p'
-        self.speed = 0
+        try:
+            if key.char in self.KEYBOARD_DICT.keys():
+                self.direction = 'p'
+                self.speed = 0
+        except:
+            pass
 
     # ======發布話題======
     def _send_keyboard(self):
         while not rospy.is_shutdown():
             order = [self.direction, str(self.speed), str(self.motor0_base), str(self.motor1_base)]
             pub.publish(','.join(order))
-
 
 if __name__ == '__main__':
     # 初始化
