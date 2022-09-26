@@ -3,6 +3,7 @@
 
 from Uart_Api import UartApi
 import rospy
+import time
 
 class Level2:
     def __init__(self, img_queue):
@@ -24,3 +25,7 @@ class Level2:
 
         if self.debug:
             print('Level2 Start')
+
+	time.sleep(5)
+
+	return True

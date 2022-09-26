@@ -49,11 +49,11 @@ class LevelManager:
                 if self.level1_finish == False:
                     self.level1_finish = True if self.level1.start() else False
 
-            elif self.button_manger.read_level2_start() or self.level1_finish:
+            if self.button_manger.read_level2_start() or self.level1_finish:
                 if self.level2_finish == False:
                     self.level2_finish = True if self.level2.start(self.level1_finish) else False
 
-            elif self.button_manger.read_level3_start() or self.level2_finish:
+            if self.button_manger.read_level3_start() or self.level2_finish:
                 if self.level3_finish == False:
                     self.level3_finish = True if self.level3.start(self.level2_finish) else False
 
