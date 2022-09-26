@@ -45,13 +45,18 @@ class Level1:
 
         # 偵測達到上限後若暫存區依舊為空則先將機器人往左擺動後重新判斷
         # 還是為空再向右擺動判斷，還是為空則將機器人定位到方框後
-        if not detect_temp:
+        if not detect_temp and self.now_direction != 'bake left':
             self._correction_robot()
             self.start()
             return True
 
         # 按照順序進行定位
         self._localization_robot(detect_temp)
+
+        # 若已經定位到方框後但還是找不到方塊則直接去到料
+        if self.now_direction == 'back left':
+            for key in self.TEL_state.keys():
+                self.TEL_state[key] = True
 
         # 判斷是否還有文字方塊未被夾取
         if False in self.TEL_state.values():
@@ -62,6 +67,11 @@ class Level1:
             self.uart_api.send_special_order(action='h')
         else:
             self.uart_api.send_special_order(action='g')
+
+        # 到料
+        self.uart_api.send_special_order(action='c')
+        time.sleep(3)
+        self.uart_api.send_special_order(action='d')
 
         # 前往第二關
         self.uart_api.send_special_order(action='j')
@@ -177,33 +187,48 @@ class Level1:
                     else:
                         if self.debug:
                             print('Positioning completed start grip {}'.format(char))
-                        successfully = self._grip_cube()
-                        self.TEL_state[char] = True
+
+                        if self._grip_cube():
+                            self.TEL_state[char] = True
+                        else:
+                            break
                 except:
                     pass
 
     # =====夾取方塊=====
     def _grip_cube(self):
         # 先停止機器人
-        self.uart_api.send_order(direction='p', value=str(0))
+        self.uart_api.send_order(direction='p')
 
         # 將爪子定位到吸取位置
         self.uart_api.send_order(motor_1=str(self.grip_motor1_degree), motor_2=str(self.grip_motor2_degree))
         if self.debug:
             print('Positioning arm...')
-        time.sleep(0.5)
 
         # 吸取方塊
         if self.debug:
             print('Gripping cube...')
         successfully = self.uart_api.send_special_order(action='a')
+        time.sleep(0.5)
 
-        # 沒有成功吸取則重新定位
+        # 沒有成功吸取則重新定位，手臂也要重新定位
         if not successfully:
+            self.uart_api.send_order()
             return False
 
         # 將爪子定位到放料位置
-        self.uart_api.send_order(motor_1=str(self.release_motor1_degree), motor_2=str(self.release_motor2_degree))
+        motor1_degree = self.grip_motor1_degree
+        motor2_degree = self.grip_motor2_degree
+        while motor2_degree != self.release_motor2_degree:
+            self.uart_api.send_order(motor_2=str(motor2_degree))
+            motor2_degree += 1
+            time.sleep(0.01)
+
+        while motor1_degree != self.release_motor1_degree:
+            self.uart_api.send_order(motor_1=str(motor1_degree))
+            motor1_degree -= 1
+            time.sleep(0.01)
+
         if self.debug:
             print('Positioning arm...')
         time.sleep(0.5)
@@ -211,7 +236,12 @@ class Level1:
         # 釋放方塊
         if self.debug:
             print('Put down cube')
-        self.uart_api.send_special_order(action='b')
+
+        successfully = self.uart_api.send_special_order(action='b')
+        # 沒有成功吸取則重新定位，手臂也要重新定位
+        if not successfully:
+            self.uart_api.send_order()
+            return False
 
         return True
 

@@ -11,18 +11,16 @@ from std_msgs.msg import String
 
 class KeyboardManger:
     def __init__(self):
-        self.KEYBOARD_DICT = self._initial_keyboard_dict()
-        self.motor0_base = rospy.get_param('/Keyboard/motor0_base')
-        self.motor1_base = rospy.get_param('/Keyboard/motor1_base')
+        self.NORMAL_KEYBOARD_DICT, self.SPECIAL_KEYBOARD_DICT = self._initial_keyboard_dict()
+        self.motor0_degree = rospy.get_param('/Keyboard/motor0_base')
+        self.motor1_degree = rospy.get_param('/Keyboard/motor1_base')
         self.direction = 'p'
         self.speed = '0'
-        print(self.motor0_base, self.motor1_base)
         # 利用子執行序不斷發布消息
         Thread(target=self._send_keyboard).start()
 
     def _initial_keyboard_dict(self):
-
-        keyboard_dict = {
+        normal_keyboard_dict = {
             # 前
             'w': {'direction': rospy.get_param('/Keyboard/up/direction'),
                   'speed': rospy.get_param('/Keyboard/up/speed')},
@@ -41,28 +39,42 @@ class KeyboardManger:
             # 逆時針
             'q': {'direction': rospy.get_param('/Keyboard/n_circle/direction'),
                   'speed': rospy.get_param('/Keyboard/n_circle/speed')},
+
         }
 
-        return keyboard_dict
+        special_keyboard_dict = {
+            # 放下方塊
+            'r': self.position_arm,
+            # 吸取方塊
+            'f': self.suck_cube,
+            # 釋放方塊
+            'g': self.release_cube
+        }
+
+        return normal_keyboard_dict, special_keyboard_dict
 
     # ======當鍵盤被按下時======
     def keyboard_press(self, key):
         try:
             # 按下一般按鍵
-            if key.char in self.KEYBOARD_DICT.keys():
-                self.direction = self.KEYBOARD_DICT[key.char]['direction']
-                self.speed = self.KEYBOARD_DICT[key.char]['speed']
+            if key.char in self.NORMAL_KEYBOARD_DICT.keys():
+                    self.direction = self.NORMAL_KEYBOARD_DICT[key.char]['direction']
+                    self.speed = self.NORMAL_KEYBOARD_DICT[key.char]['speed']
 
-        # 按下一般特殊按鍵
+            # 按下功能按鍵
+            if key.char in self.SPECIAL_KEYBOARD_DICT.keys():
+                self.SPECIAL_KEYBOARD_DICT[key.char]()
+
+        # 按下特殊按鍵
         except AttributeError:
-            if key == Key.up:
-                self.motor1_base += 1
-            if key == Key.down:
-                self.motor1_base -= 1
-            if key == Key.left:
-                self.motor0_base += 1
-            if key == Key.right:
-                self.motor0_base -= 1
+            if key == Key.up and self.motor1_degree < 180:
+                self.motor1_degree += 2
+            if key == Key.down and self.motor1_degree > 0:
+                self.motor1_degree -= 2
+            if key == Key.left and self.motor0_degree < 180:
+                self.motor0_degree += 2
+            if key == Key.right and self.motor0_degree > 0:
+                self.motor0_degree -= 2
 
             # 按下esc鍵
             if key == Key.esc:
@@ -71,10 +83,41 @@ class KeyboardManger:
         except:
             pass
 
+    # ======吸取======
+    def suck_cube(self):
+        order = 'a'
+        pub.publish(order)
+
+    # ======釋放======
+    def release_cube(self):
+        order = 'b'
+        pub.publish(order)
+
+    # ======定位手臂到放料位置======
+    def position_arm(self):
+        motor0_base = rospy.get_param('/Keyboard/putdown_cube/motor0')
+        motor1_base = rospy.get_param('/Keyboard/putdown_cube/motor1')
+
+        # 調整motor1
+        while self.motor1_degree != motor1_base:
+            if self.motor1_degree > motor1_base:
+                self.motor1_degree -= 1
+            else:
+                self.motor1_degree += 1
+            time.sleep(0.01)
+
+        # 調整motor0
+        while self.motor0_degree != motor0_base:
+            if self.motor0_degree > motor0_base:
+                self.motor0_degree -= 1
+            else:
+                self.motor0_degree += 1
+            time.sleep(0.01)
+
     # ======當鍵盤被放開時======
     def keyboard_release(self, key):
         try:
-            if key.char in self.KEYBOARD_DICT.keys():
+            if key.char in self.NORMAL_KEYBOARD_DICT.keys():
                 self.direction = 'p'
                 self.speed = 0
         except:
@@ -83,8 +126,10 @@ class KeyboardManger:
     # ======發布話題======
     def _send_keyboard(self):
         while not rospy.is_shutdown():
-            order = [self.direction, str(self.speed), str(self.motor0_base), str(self.motor1_base)]
+            order = [self.direction, str(self.speed), str(self.motor0_degree), str(self.motor1_degree)]
             pub.publish(','.join(order))
+            time.sleep(0.01)
+
 
 if __name__ == '__main__':
     # 初始化

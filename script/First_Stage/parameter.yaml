@@ -1,14 +1,7 @@
 # ======Debug======
 Debug: true
-TestMode: true
+TestMode: false
 TestLevel: 1
-
-# ======Button pin======
-Button: {
-  Level1: 13,
-  Level2: 15,
-  Level3: 19
-}
 
 # ======For Find TEL======
 DetectLimit: 20 # Detect times limit
@@ -19,12 +12,16 @@ HorMiddlePoint: 385 # Camera horizontal middle point for align cube
 VerMiddlePoint: 400 # Camera vertical middle point for align cube
 HorErrorRange: 7 # Allowable horizontal error when positioning
 VerErrorRange: 7 # Allowable vertical error when positioning
-GripMotor1Degree: 40 # Grip cube motor1 degree
-GripMotor2Degree: 40 # Grip cube motor2 degree
-ReleaseMotor1Degree: 40 # Release cube motor1 degree
-ReleaseMotor2Degree: 40 # Release cube motor2 degree
+GripMotor1Degree: 120 # Grip cube motor1 degree
+GripMotor2Degree: 130 # Grip cube motor2 degree
+ReleaseMotor1Degree: 115 # Release cube motor1 degree
+ReleaseMotor2Degree: 110 # Release cube motor2 degree
 
 
-# ======Serial parameter======
-Port: '/dev/ttyACM0'
-Baudrate: 115200
+# ======Mega Serial parameter======
+MegaPort: '/dev/ttyTHS1'
+MegaBaudrate: 115200
+
+# ======Nano Serial parameter======
+NanoPort: '/dev/ttyUSB0'
+NanoBaudrate: 115200

@@ -9,12 +9,15 @@ def callback(data_msg):
     data = data_msg.data
     data = data.split(',')
 
-    direction = data[0]
-    speed = data[1]
-    motor0_base = data[2]
-    motor1_base = data[3]
+    if len(data) == 4:
+        direction = data[0]
+        speed = data[1]
+        motor0_base = data[2]
+        motor1_base = data[3]
 
-    uart_api.send_order(direction=direction, value=speed, motor_1=motor0_base, motor_2=motor1_base)
+        uart_api.send_order(direction=direction, value=speed, motor_1=motor0_base, motor_2=motor1_base)
+    else:
+        uart_api.send_special_order(data[0])
 
 if __name__ == '__main__':
     # 初始化

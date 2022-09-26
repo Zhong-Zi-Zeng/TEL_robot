@@ -9,11 +9,12 @@ Keyboard : {
   right : {direction : 'd', speed : 128},# Pan right
   p_circle : {direction : 'm', speed : 128},# Positive circle
   n_circle : {direction : 'n', speed : 128},# Negative circle
-  motor0_base : 40, # motor0 initial degree
-  motor1_base : 40  # motor1 initial degree
-
+  putdown_cube :{motor0 : 0, motor1 : 100},
+  motor0_base : 115, # motor0 initial degree
+  motor1_base : 110  # motor1 initial degree
 }
 
+
 # ======Serial parameter======
-Port : '/dev/ttyACM0'
+Port : '/dev/ttyTHS1'
 Baudrate : 115200
