@@ -7,8 +7,8 @@ import rospy
 class ButtonManger:
     def __init__(self):
         # 初始化Serial
-        self.port = rospy.get_param('/MegaPort')
-        self.baudrate = rospy.get_param('/MegaBaudrate')
+        self.port = rospy.get_param('/NanoPort')
+        self.baudrate = rospy.get_param('/NanoBaudrate')
         self.ser = serial.Serial(self.port, self.baudrate)
 
     def read_response(self, level):

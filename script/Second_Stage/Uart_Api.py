@@ -32,16 +32,8 @@ class UartApi:
     # ======傳送特殊指令======
     def send_special_order(self, action):
         assert isinstance(action, str), 'Argument value type not str'
-        assert isinstance(action, str), 'Argument value type not str'
 
         order = '<' + action
         order = list(map(ord, order))
         self.ser.write(bytes(order))
 
-        while self.ser.in_waiting:
-            response = str(self.ser.read().decode('utf-8'))
-
-            if response == 'a':
-                return True
-            else:
-                return False
