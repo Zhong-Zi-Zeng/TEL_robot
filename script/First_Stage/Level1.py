@@ -48,7 +48,6 @@ class Level1:
         if not detect_temp and self.now_direction != 'bake left':
             self._correction_robot()
             self.start()
-            return True
 
         # 按照順序進行定位
         self._localization_robot(detect_temp)
@@ -78,6 +77,8 @@ class Level1:
 
         if self.debug:
             print('Go to Level 2!')
+
+        return True
 
     # =====尋找有無TEL=====
     def _find_TEL(self):

@@ -12,12 +12,13 @@ class ButtonManger:
         self.ser = serial.Serial(self.port, self.baudrate)
 
     def read_response(self, level):
-        self.ser.write(list(map(ord, level)))
+        self.ser.write(level)
 
         while self.ser.in_waiting:
-            response = str(self.ser.read().decode('utf-8'))
-            print(response)
-            return response
+            if int(self.ser.read().decode('utf-8')):
+                return True
+
+        return False
 
     # ===========讀取第一關接腳===========
     def read_level1_start(self):
