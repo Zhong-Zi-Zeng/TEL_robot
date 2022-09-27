@@ -41,7 +41,6 @@ class LevelManager:
         else:
             self.level3.start(self.level2_finish)
 
-
     def listen_button(self):
         while not rospy.is_shutdown():
             # 判斷關卡按鈕有沒有被按下
@@ -56,9 +55,6 @@ class LevelManager:
             if self.button_manger.read_level3_start() or self.level2_finish:
                 if self.level3_finish == False:
                     self.level3_finish = True if self.level3.start(self.level2_finish) else False
-
-
-
 
 if __name__ == '__main__':
     LevelManager()

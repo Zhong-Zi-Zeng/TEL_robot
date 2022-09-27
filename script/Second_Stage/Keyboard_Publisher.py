@@ -16,6 +16,15 @@ class KeyboardManger:
         self.motor1_degree = rospy.get_param('/Keyboard/motor1_base')
         self.direction = 'p'
         self.speed = '0'
+
+        # 上下左右鍵狀態
+        self.dir_keyboard_state = {
+            'up': False,
+            'down': False,
+            'left': False,
+            'right': False
+        }
+
         # 利用子執行序不斷發布消息
         Thread(target=self._send_keyboard).start()
 
@@ -58,8 +67,8 @@ class KeyboardManger:
         try:
             # 按下一般按鍵
             if key.char in self.NORMAL_KEYBOARD_DICT.keys():
-                    self.direction = self.NORMAL_KEYBOARD_DICT[key.char]['direction']
-                    self.speed = self.NORMAL_KEYBOARD_DICT[key.char]['speed']
+                self.direction = self.NORMAL_KEYBOARD_DICT[key.char]['direction']
+                self.speed = self.NORMAL_KEYBOARD_DICT[key.char]['speed']
 
             # 按下功能按鍵
             if key.char in self.SPECIAL_KEYBOARD_DICT.keys():
@@ -67,14 +76,14 @@ class KeyboardManger:
 
         # 按下特殊按鍵
         except AttributeError:
-            if key == Key.up and self.motor1_degree < 180:
-                self.motor1_degree += 2
-            if key == Key.down and self.motor1_degree > 0:
-                self.motor1_degree -= 2
-            if key == Key.left and self.motor0_degree < 180:
-                self.motor0_degree += 2
-            if key == Key.right and self.motor0_degree > 0:
-                self.motor0_degree -= 2
+            if key == Key.up:
+                self.dir_keyboard_state['up'] = True
+            if key == Key.down:
+                self.dir_keyboard_state['down'] = True
+            if key == Key.left:
+                self.dir_keyboard_state['left'] = True
+            if key == Key.right:
+                self.dir_keyboard_state['right'] = True
 
             # 按下esc鍵
             if key == Key.esc:
@@ -92,6 +101,21 @@ class KeyboardManger:
     def release_cube(self):
         order = 'b'
         pub.publish(order)
+
+
+    # ======控制手臂======
+    def control_arm(self):
+        if self.dir_keyboard_state['up'] and self.motor1_degree > 0:
+            self.motor1_degree -= 1
+
+        if self.dir_keyboard_state['down'] and self.motor1_degree < 180:
+            self.motor1_degree += 1
+
+        if self.dir_keyboard_state['left'] and self.motor0_degree < 180:
+            self.motor0_degree += 1
+
+        if self.dir_keyboard_state['right'] and self.motor0_degree > 0:
+            self.motor0_degree -= 1
 
     # ======定位手臂到放料位置======
     def position_arm(self):
@@ -121,11 +145,19 @@ class KeyboardManger:
                 self.direction = 'p'
                 self.speed = 0
         except:
-            pass
+            if key == Key.up:
+                self.dir_keyboard_state['up'] = False
+            if key == Key.down:
+                self.dir_keyboard_state['down'] = False
+            if key == Key.left:
+                self.dir_keyboard_state['left'] = False
+            if key == Key.right:
+                self.dir_keyboard_state['right'] = False
 
     # ======發布話題======
     def _send_keyboard(self):
         while not rospy.is_shutdown():
+            self.control_arm()
             order = [self.direction, str(self.speed), str(self.motor0_degree), str(self.motor1_degree)]
             pub.publish(','.join(order))
             time.sleep(0.01)

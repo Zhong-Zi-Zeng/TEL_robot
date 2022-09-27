@@ -5,6 +5,7 @@ import serial
 import rospy
 import time
 
+
 class ButtonManger:
     def __init__(self):
         # 初始化Serial
@@ -12,14 +13,14 @@ class ButtonManger:
         self.baudrate = rospy.get_param('/NanoBaudrate')
         self.ser = serial.Serial(self.port, self.baudrate)
 
-
     def read_response(self, level):
         self.ser.write(level)
-	while True:
-	    while self.ser.in_waiting:
-		if int(self.ser.read().decode('utf-8')):
-		    return True
-		return False
+
+        while True:
+            while self.ser.in_waiting:
+                if int(self.ser.read().decode('utf-8')):
+                    return True
+                return False
 
     # ===========讀取第一關接腳===========
     def read_level1_start(self):
