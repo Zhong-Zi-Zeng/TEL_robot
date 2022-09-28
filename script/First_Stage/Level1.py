@@ -22,15 +22,18 @@ class Level1:
         self.detect_limit = rospy.get_param('/DetectLimit')  # 檢測次數上限
         self.velocity_baseline = rospy.get_param('/VelocityBaseline')  # 最低速度基準線
         self.distance_threshold = rospy.get_param('/DistanceThreshold')  # 檢測最遠離閥值
+        self.check_distance_threshold = rospy.get_param('/CheckDistanceThreshold')  # 檢測最遠離閥值
         self.turn_degree = rospy.get_param('/TurnDegree')  # 找不到方框時調整機器人的角度
         self.hor_middle_point = rospy.get_param('/HorMiddlePoint')  # 水平中心點
         self.ver_middle_point = rospy.get_param('/VerMiddlePoint')  # 垂直中心點
         self.hor_error_range = rospy.get_param('/HorErrorRange')  # 在夾取方塊時允許的水平誤差範圍
         self.ver_error_range = rospy.get_param('/VerErrorRange')  # 在夾取方塊時允許的垂直誤差範圍
-        self.grip_motor1_degree = rospy.get_param('GripMotor1Degree')  # 夾取物品時的motor1角度
-        self.grip_motor2_degree = rospy.get_param('GripMotor2Degree')  # 夾取物品時的motor2角度
-        self.release_motor1_degree = rospy.get_param('ReleaseMotor1Degree')  # 釋放物品時的motor2角度
-        self.release_motor2_degree = rospy.get_param('ReleaseMotor2Degree')  # 釋放物品時的motor2角度
+        self.check_motor1_degree = rospy.get_param('/CheckMotor1Degree')  # 檢查是否有夾到物品時的motor1角度
+        self.check_motor2_degree = rospy.get_param('/CheckMotor2Degree')  # 檢查是否有夾到品時的motor2角度
+        self.grip_motor1_degree = rospy.get_param('/GripMotor1Degree')  # 夾取物品時的motor1角度
+        self.grip_motor2_degree = rospy.get_param('/GripMotor2Degree')  # 夾取物品時的motor2角度
+        self.release_motor1_degree = rospy.get_param('/ReleaseMotor1Degree')  # 釋放物品時的motor2角度
+        self.release_motor2_degree = rospy.get_param('/ReleaseMotor2Degree')  # 釋放物品時的motor2角度
 
         # 設定變數
         self.now_direction = None  # 紀錄當前機器人方向
@@ -164,24 +167,24 @@ class Level1:
                     if not self.hor_middle_point - self.hor_error_range <= c_x <= self.hor_middle_point + self.hor_error_range:
                         if c_x > self.hor_middle_point:
                             self.uart_api.send_order(direction='d', value=str(
-                                abs(self.hor_middle_point - c_x)/10 + self.velocity_baseline))
+                                abs(self.hor_middle_point - c_x) / 10 + self.velocity_baseline))
                             if self.debug:
                                 print('Move Right')
                         else:
                             self.uart_api.send_order(direction='a', value=str(
-                                abs(self.hor_middle_point - c_x)/10 + self.velocity_baseline))
+                                abs(self.hor_middle_point - c_x) / 10 + self.velocity_baseline))
                             if self.debug:
                                 print('Move Left')
                     # 判斷前後是否需要調整
                     elif not self.ver_middle_point - self.ver_error_range <= c_y <= self.ver_middle_point + self.ver_error_range:
                         if c_y > self.ver_middle_point:
                             self.uart_api.send_order(direction='s', value=str(
-                                abs(self.hor_middle_point - c_y)/10 + self.velocity_baseline))
+                                abs(self.hor_middle_point - c_y) / 10 + self.velocity_baseline))
                             if self.debug:
                                 print('Move Back')
                         else:
                             self.uart_api.send_order(direction='w', value=str(
-                                abs(self.hor_middle_point - c_y)/10 + self.velocity_baseline))
+                                abs(self.hor_middle_point - c_y) / 10 + self.velocity_baseline))
                             if self.debug:
                                 print('Move Front')
                     # 夾取方塊，若夾取到則把此字母狀態改為True
@@ -209,17 +212,20 @@ class Level1:
         # 吸取方塊
         if self.debug:
             print('Gripping cube...')
-        successfully = self.uart_api.send_special_order(action='a')
+        self.uart_api.send_special_order(action='a')
         time.sleep(0.5)
 
-        # 沒有成功吸取則重新定位，手臂也要重新定位
+        # 確認是否有吸到方塊，沒有成功吸取則重新定位手臂
+        if self.debug:
+            print('Check cube...')
+        successfully = self._check_grip_cube()
         if not successfully:
             self.uart_api.send_order()
             return False
 
         # 將爪子定位到放料位置
-        motor1_degree = self.grip_motor1_degree
-        motor2_degree = self.grip_motor2_degree
+        motor1_degree = self.check_motor1_degree
+        motor2_degree = self.check_motor2_degree
         while motor2_degree != self.release_motor2_degree:
             self.uart_api.send_order(motor_2=str(motor2_degree))
             motor2_degree += 1
@@ -230,18 +236,31 @@ class Level1:
             motor1_degree -= 1
             time.sleep(0.01)
 
-        if self.debug:
-            print('Positioning arm...')
-        time.sleep(0.5)
-
         # 釋放方塊
         if self.debug:
             print('Put down cube')
+        self.uart_api.send_special_order(action='b')
 
-        successfully = self.uart_api.send_special_order(action='b')
-        # 沒有成功吸取則重新定位，手臂也要重新定位
-        if not successfully:
-            self.uart_api.send_order()
+        return True
+
+    # =====確認是否夾到方塊方塊=====
+    def _check_grip_cube(self):
+        # 將爪子定位到偵測位置
+        motor1_degree = self.grip_motor1_degree
+        motor2_degree = self.grip_motor2_degree
+
+        while motor2_degree != self.check_motor2_degree:
+            self.uart_api.send_order(motor_2=str(motor2_degree))
+            motor2_degree -= 1
+            time.sleep(0.01)
+
+        while motor1_degree != self.check_motor1_degree:
+            self.uart_api.send_order(motor_1=str(motor1_degree))
+            motor1_degree += 1
+            time.sleep(0.01)
+
+        distance = self._get_distance(270, 43)
+        if distance > self.check_distance_threshold:
             return False
 
         return True
