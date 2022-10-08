@@ -138,6 +138,8 @@ class KeyboardManger:
                 self.motor0_degree += 1
             time.sleep(0.01)
 
+        self.release_cube()
+
     # ======當鍵盤被放開時======
     def keyboard_release(self, key):
         try:
