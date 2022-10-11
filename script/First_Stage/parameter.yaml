@@ -17,8 +17,8 @@ CheckMotor1Degree: 162 # Check out cube motor1 degree
 CheckMotor2Degree: 90 # Check out cube motor2 degree
 GripMotor1Degree: 120 # Grip cube motor1 degree
 GripMotor2Degree: 130 # Grip cube motor2 degree
-ReleaseMotor1Degree: 115 # Release cube motor1 degree
-ReleaseMotor2Degree: 110 # Release cube motor2 degree
+ReleaseMotor1Degree: 0 # Release cube motor1 degree
+ReleaseMotor2Degree: 100 # Release cube motor2 degree
 
 
 # ======Mega Serial parameter======
