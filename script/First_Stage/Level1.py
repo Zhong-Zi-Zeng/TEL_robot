@@ -132,7 +132,7 @@ class Level1:
 
         # 一開始定位到方框前
         if self.now_direction is None:
-            self.uart_api.send_special_order(action='e')
+            #self.uart_api.send_special_order(action='e')
             self.now_direction = 'front'
 
         # 由前向右轉
@@ -218,9 +218,19 @@ class Level1:
         self.uart_api.send_order(direction='p')
 
         # 將爪子定位到吸取位置
-        self.uart_api.send_order(motor_1=str(self.grip_motor1_degree), motor_2=str(self.grip_motor2_degree))
         if self.debug:
             print('Positioning arm...')
+        motor1_degree = self.grip_motor1_degree
+        motor2_degree = self.grip_motor2_degree
+        while motor2_degree != self.grip_motor2_degree:
+            self.uart_api.send_order(motor_2=str(motor2_degree))
+            motor2_degree += 1
+            time.sleep(0.01)
+
+        while motor1_degree != self.grip_motor1_degree:
+            self.uart_api.send_order(motor_1=str(motor1_degree))
+            motor1_degree += 1
+            time.sleep(0.01)
 
         # 吸取方塊
         if self.debug:
