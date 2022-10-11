@@ -134,14 +134,27 @@ class Level1:
         if self.now_direction is None:
             self.uart_api.send_special_order(action='e')
             self.now_direction = 'front'
-        # 向右轉
-        elif self.now_direction == 'front' or self.now_direction == 'back':
+
+        # 由前向右轉
+        elif self.now_direction == 'front':
             self.uart_api.send_order(degree=str(self.turn_degree))
-            self.now_direction = 'right' if self.now_direction != 'back' else 'bake right'
-        # 向左轉
-        elif self.now_direction == 'right' or self.now_direction == 'bake right':
-            self.uart_api.send_order(degree=str(-self.turn_degree * 2))
-            self.now_direction = 'left' if self.now_direction != 'bake right' else 'bake left'
+            self.now_direction = 'right'
+
+        # 由後向右轉
+        elif self.now_direction == 'back':
+            self.uart_api.send_order(degree=str(180 + self.turn_degree))
+            self.now_direction = 'back right'
+
+        # 由前向左轉
+        elif self.now_direction == 'right':
+            self.uart_api.send_order(degree=str(360 - self.turn_degree))
+            self.now_direction = 'left'
+
+        # 由後向左轉
+        elif self.now_direction == 'bake right':
+            self.uart_api.send_order(degree=str(180 - self.turn_degree))
+            self.now_direction = 'back left'
+
         # 定位到方框後
         elif self.now_direction != 'bake left':
             self.uart_api.send_special_order(action='f')
