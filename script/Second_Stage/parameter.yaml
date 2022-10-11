@@ -3,12 +3,12 @@ Debug : true
 
 # ======Keyboard order======
 Keyboard : {
-  up : {direction : 'w', speed : 128},  # Front
-  down : {direction : 's', speed : 128},# Back
-  left : {direction : 'a', speed : 128},# Pan left
-  right : {direction : 'd', speed : 128},# Pan right
-  p_circle : {direction : 'm', speed : 128},# Positive circle
-  n_circle : {direction : 'n', speed : 128},# Negative circle
+  up : {direction : 'w', speed : 60},  # Front
+  down : {direction : 's', speed : 60},# Back
+  left : {direction : 'a', speed : 60},# Pan left
+  right : {direction : 'd', speed : 60},# Pan right
+  p_circle : {direction : 'm', speed : 60},# Positive circle
+  n_circle : {direction : 'n', speed : 60},# Negative circle
   putdown_cube :{motor0 : 0, motor1 : 100},
   motor0_base : 115, # motor0 initial degree
   motor1_base : 110  # motor1 initial degree

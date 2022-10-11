@@ -187,7 +187,7 @@ class Level1:
                                 abs(self.hor_middle_point - c_y) / 10 + self.velocity_baseline))
                             if self.debug:
                                 print('Move Front')
-                    # 夾取方塊，若夾取到則把此字母狀態改為True
+                    # 夾取方塊，若夾取到則把此字母狀態改為True，沒夾到則直接換夾下一個
                     else:
                         if self.debug:
                             print('Positioning completed start grip {}'.format(char))

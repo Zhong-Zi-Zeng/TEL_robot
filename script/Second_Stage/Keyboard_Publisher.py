@@ -138,7 +138,13 @@ class KeyboardManger:
                 self.motor0_degree += 1
             time.sleep(0.01)
 
+        # 釋放方塊
         self.release_cube()
+
+        # 重新定位手臂到前方
+        self.motor0_degree = rospy.get_param('/Keyboard/motor0_base')
+        self.motor1_degree = rospy.get_param('/Keyboard/motor1_base')
+
 
     # ======當鍵盤被放開時======
     def keyboard_release(self, key):
