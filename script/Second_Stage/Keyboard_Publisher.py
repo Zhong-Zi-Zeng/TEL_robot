@@ -166,6 +166,7 @@ class KeyboardManger:
     def _send_keyboard(self):
         while not rospy.is_shutdown():
             self.control_arm()
+            print(self.motor0_degree, self.motor1_degree)
             order = [self.direction, str(self.speed), str(self.motor0_degree), str(self.motor1_degree)]
             pub.publish(','.join(order))
             time.sleep(0.01)

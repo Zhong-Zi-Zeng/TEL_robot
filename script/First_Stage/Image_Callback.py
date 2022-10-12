@@ -2,47 +2,28 @@
 # -*- coding: UTF-8 -*-
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
-from collections import deque
 import numpy as np
 import rospy
 
 class ImageCallback:
     def __init__(self):
-        # 建立柱列
-        self.img_queue = deque(maxlen=1)
-        self.depth_img_queue = deque(maxlen=1)
-
         # 初始化節點
         self.bridge = CvBridge()
         rospy.init_node('subscribe_image')
-        rospy.Subscriber('/camera/color/image_raw', Image, self._img_callback)
-        rospy.Subscriber('/camera/aligned_depth_to_color/image_raw', Image, self._depth_img_callback)
 
-    # RGB影像回調函式
-    def _img_callback(self, img_msgs):
-        img = self.bridge.imgmsg_to_cv2(img_msgs, 'bgr8')
+    # 返回RGB影像
+    def get_img(self):
+        rgb_img = rospy.wait_for_message('/camera/color/image_raw', Image)
+        rgb_img = self.bridge.imgmsg_to_cv2(rgb_img, 'bgr8')
 
-        self.img_queue.append(img)
+        return rgb_img
 
-    # 深度影像回調函式
-    def _depth_img_callback(self, depth_img_msgs):
-        depth_img = self.bridge.imgmsg_to_cv2(depth_img_msgs, "16UC1")
+    # 返回Depth影像
+    def get_depth_img(self):
+        depth_img = rospy.wait_for_message('/camera/aligned_depth_to_color/image_raw', Image)
+        depth_img = self.bridge.imgmsg_to_cv2(depth_img, "16UC1")
         depth_img = np.float16(depth_img) / 10
 
-        self.depth_img_queue.append(depth_img)
+        return depth_img
 
-    def get_img(self):
-        while len(self.img_queue) == 0:
-            pass
-
-        return self.img_queue.pop()
-
-    def get_depth_img(self):
-        while True:
-            while len(self.depth_img_queue) == 0:
-                pass
-
-            depth = self.depth_img_queue.pop()
-            if depth != 0:
-                return depth
 
