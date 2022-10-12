@@ -5,18 +5,21 @@ TestLevel: 1
 
 # ======For Find TEL======
 DetectLimit: 20 # Detect times limit
-VelocityBaseline: 14 # Velocity lower limit
+VelocityBaseline: 17 # Velocity lower limit
 DistanceThreshold: 0.4 # Detect distance threshold
-CheckDistanceThreshold: 0.08 # Check have grip cube
+CheckDistanceThreshold: 22 # Check have grip cube
 TurnDegree: 43 # When can't detect TEL the robot will turn this degree
-HorMiddlePoint: 385 # Camera horizontal middle point for align cube
-VerMiddlePoint: 400 # Camera vertical middle point for align cube
-HorErrorRange: 7 # Allowable horizontal error when positioning
-VerErrorRange: 7 # Allowable vertical error when positioning
+HorMiddlePoint: 450 # Camera horizontal middle point for align cube
+VerMiddlePoint: 380 # Camera vertical middle point for align cube
+HorErrorRange: 9 # Allowable horizontal error when positioning
+VerErrorRange: 9 # Allowable vertical error when positioning
+
+InitMotor1Degree: 115  # Initial motor1 degree
+InitMotor2Degree: 110  # Initial motor2 degree
 CheckMotor1Degree: 162 # Check out cube motor1 degree
 CheckMotor2Degree: 90 # Check out cube motor2 degree
-GripMotor1Degree: 120 # Grip cube motor1 degree
-GripMotor2Degree: 130 # Grip cube motor2 degree
+GripMotor1Degree: 136 # Grip cube motor1 degree
+GripMotor2Degree: 60 # Grip cube motor2 degree
 ReleaseMotor1Degree: 0 # Release cube motor1 degree
 ReleaseMotor2Degree: 100 # Release cube motor2 degree
 

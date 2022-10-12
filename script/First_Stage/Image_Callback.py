@@ -3,6 +3,7 @@
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 from collections import deque
+import numpy as np
 import rospy
 
 class ImageCallback:
@@ -25,9 +26,10 @@ class ImageCallback:
 
     # 深度影像回調函式
     def _depth_img_callback(self, depth_img_msgs):
-        depth_img = self.bridge.imgmsg_to_cv2(depth_img_msgs, "32FC1")
+        depth_img = self.bridge.imgmsg_to_cv2(depth_img_msgs, "16UC1")
+        depth_img = np.float16(depth_img) / 10
 
-        self.depth_img_queue.append(depth_img * 0.001)
+        self.depth_img_queue.append(depth_img)
 
     def get_img(self):
         while len(self.img_queue) == 0:
@@ -36,8 +38,11 @@ class ImageCallback:
         return self.img_queue.pop()
 
     def get_depth_img(self):
-        while len(self.depth_img_queue) == 0:
-            pass
+        while True:
+            while len(self.depth_img_queue) == 0:
+                pass
 
-        return self.depth_img_queue.pop()
+            depth = self.depth_img_queue.pop()
+            if depth != 0:
+                return depth
 

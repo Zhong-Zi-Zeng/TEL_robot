@@ -28,6 +28,9 @@ class Level1:
         self.ver_middle_point = rospy.get_param('/VerMiddlePoint')  # 垂直中心點
         self.hor_error_range = rospy.get_param('/HorErrorRange')  # 在夾取方塊時允許的水平誤差範圍
         self.ver_error_range = rospy.get_param('/VerErrorRange')  # 在夾取方塊時允許的垂直誤差範圍
+
+        self.init_motor1_degree = rospy.get_param('/InitMotor1Degree')  # motor1初始角度
+        self.init_motor2_degree = rospy.get_param('/InitMotor2Degree')  # motor2初始角度
         self.check_motor1_degree = rospy.get_param('/CheckMotor1Degree')  # 檢查是否有夾到物品時的motor1角度
         self.check_motor2_degree = rospy.get_param('/CheckMotor2Degree')  # 檢查是否有夾到品時的motor2角度
         self.grip_motor1_degree = rospy.get_param('/GripMotor1Degree')  # 夾取物品時的motor1角度
@@ -179,27 +182,35 @@ class Level1:
                     # 判斷左右是否需要調整
                     if not self.hor_middle_point - self.hor_error_range <= c_x <= self.hor_middle_point + self.hor_error_range:
                         if c_x > self.hor_middle_point:
-                            self.uart_api.send_order(direction='d', value=str(
-                                abs(self.hor_middle_point - c_x) / 10 + self.velocity_baseline))
+                            self.uart_api.send_order(direction='d', value=str(int(
+                                abs(self.hor_middle_point - c_x) / 10 + self.velocity_baseline)))
                             if self.debug:
                                 print('Move Right')
                         else:
-                            self.uart_api.send_order(direction='a', value=str(
-                                abs(self.hor_middle_point - c_x) / 10 + self.velocity_baseline))
+                            self.uart_api.send_order(direction='a', value=str(int(
+                                abs(self.hor_middle_point - c_x) / 10 + self.velocity_baseline)))
                             if self.debug:
                                 print('Move Left')
+
+                        time.sleep(0.1)
+                        self.uart_api.send_order(direction='p')
+
                     # 判斷前後是否需要調整
                     elif not self.ver_middle_point - self.ver_error_range <= c_y <= self.ver_middle_point + self.ver_error_range:
                         if c_y > self.ver_middle_point:
-                            self.uart_api.send_order(direction='s', value=str(
-                                abs(self.hor_middle_point - c_y) / 10 + self.velocity_baseline))
+                            self.uart_api.send_order(direction='s', value=str(int(
+                                abs(self.hor_middle_point - c_y) / 10 + self.velocity_baseline)))
                             if self.debug:
                                 print('Move Back')
                         else:
-                            self.uart_api.send_order(direction='w', value=str(
-                                abs(self.hor_middle_point - c_y) / 10 + self.velocity_baseline))
+                            self.uart_api.send_order(direction='w', value=str(int(
+                                abs(self.hor_middle_point - c_y) / 10 + self.velocity_baseline)))
                             if self.debug:
                                 print('Move Front')
+
+                        time.sleep(0.1)
+                        self.uart_api.send_order(direction='p')
+
                     # 夾取方塊，若夾取到則把此字母狀態改為True，沒夾到則直接換夾下一個
                     else:
                         if self.debug:
@@ -210,7 +221,7 @@ class Level1:
                         else:
                             break
                 except:
-                    pass
+                    print("Something Error")
 
     # =====夾取方塊=====
     def _grip_cube(self):
@@ -220,30 +231,33 @@ class Level1:
         # 將爪子定位到吸取位置
         if self.debug:
             print('Positioning arm...')
-        motor1_degree = self.grip_motor1_degree
-        motor2_degree = self.grip_motor2_degree
+        motor1_degree = self.init_motor1_degree
+        motor2_degree = self.init_motor2_degree
         while motor2_degree != self.grip_motor2_degree:
             self.uart_api.send_order(motor_2=str(motor2_degree))
-            motor2_degree += 1
+            motor2_degree -= 1
             time.sleep(0.01)
 
         while motor1_degree != self.grip_motor1_degree:
-            self.uart_api.send_order(motor_1=str(motor1_degree))
+            self.uart_api.send_order(motor_1=str(motor1_degree), motor_2=str(motor2_degree))
             motor1_degree += 1
             time.sleep(0.01)
+
 
         # 吸取方塊
         if self.debug:
             print('Gripping cube...')
         self.uart_api.send_special_order(action='a')
-        time.sleep(0.5)
+        time.sleep(1)
 
-        # 確認是否有吸到方塊，沒有成功吸取則重新定位手臂
+        # 確認是否有吸到方塊，沒有成功吸取則重新定位手臂並把幫補關掉
         if self.debug:
             print('Check cube...')
         successfully = self._check_grip_cube()
         if not successfully:
             self.uart_api.send_order()
+            time.sleep(0.5)
+            self.uart_api.send_special_order(action='b')
             return False
 
         # 將爪子定位到放料位置
@@ -255,7 +269,7 @@ class Level1:
             time.sleep(0.01)
 
         while motor1_degree != self.release_motor1_degree:
-            self.uart_api.send_order(motor_1=str(motor1_degree))
+            self.uart_api.send_order(motor_1=str(motor1_degree), motor_2=str(motor2_degree))
             motor1_degree -= 1
             time.sleep(0.01)
 
@@ -263,6 +277,9 @@ class Level1:
         if self.debug:
             print('Put down cube')
         self.uart_api.send_special_order(action='b')
+
+        # 重新定位手臂到初始位置
+        self.uart_api.send_order(motor_1=self.init_motor1_degree, motor_2=self.init_motor2_degree)
 
         return True
 
@@ -274,15 +291,16 @@ class Level1:
 
         while motor2_degree != self.check_motor2_degree:
             self.uart_api.send_order(motor_2=str(motor2_degree))
-            motor2_degree -= 1
+            motor2_degree += 1
             time.sleep(0.01)
 
         while motor1_degree != self.check_motor1_degree:
-            self.uart_api.send_order(motor_1=str(motor1_degree))
+            self.uart_api.send_order(motor_1=str(motor1_degree), motor_2=str(motor2_degree))
             motor1_degree += 1
             time.sleep(0.01)
 
-        distance = self._get_distance(270, 43)
+        distance = self._get_distance(365, 131)
+        time.sleep(2)
         if distance > self.check_distance_threshold:
             return False
 
