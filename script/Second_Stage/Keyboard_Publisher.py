@@ -57,7 +57,11 @@ class KeyboardManger:
             # 吸取方塊
             'f': self.suck_cube,
             # 釋放方塊
-            'g': self.release_cube
+            'g': self.release_cube,
+            # 開啟閘道
+            'v': self.open_gate,
+            # 關閉閘道
+            'b': self.close_gate,
         }
 
         return normal_keyboard_dict, special_keyboard_dict
@@ -94,14 +98,19 @@ class KeyboardManger:
 
     # ======吸取======
     def suck_cube(self):
-        order = 'a'
-        pub.publish(order)
+        pub.publish('a')
 
     # ======釋放======
     def release_cube(self):
-        order = 'b'
-        pub.publish(order)
+        pub.publish('b')
 
+    # ======開啟閘道======
+    def open_gate(self):
+        pub.publish('c')
+
+    # ======關閉閘道======
+    def close_gate(self):
+        pub.publish('d')
 
     # ======控制手臂======
     def control_arm(self):
@@ -145,7 +154,6 @@ class KeyboardManger:
         self.motor0_degree = rospy.get_param('/Keyboard/motor0_base')
         self.motor1_degree = rospy.get_param('/Keyboard/motor1_base')
 
-
     # ======當鍵盤被放開時======
     def keyboard_release(self, key):
         try:
@@ -166,7 +174,6 @@ class KeyboardManger:
     def _send_keyboard(self):
         while not rospy.is_shutdown():
             self.control_arm()
-            print(self.motor0_degree, self.motor1_degree)
             order = [self.direction, str(self.speed), str(self.motor0_degree), str(self.motor1_degree)]
             pub.publish(','.join(order))
             time.sleep(0.01)

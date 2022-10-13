@@ -176,11 +176,21 @@ class Level1:
         if len(detect_temp) == 0:
             return
 
-        # 只取第一個出來定位，不然怕定位好第一個後找不到下一個，會引起錯誤
-        char = list(detect_temp.keys())[0]
+        # 找出離機器人最近的方塊
+        candidate = []
+        for bbox in detect_temp.values():
+            c_x, c_y, w, h = bbox
+            candidate.append(c_y)
+        candidate.sort(reverse=True)
 
-        hor_correct = False
-        ver_correct = False
+        for c, bbox in detect_temp.items():
+            c_x, c_y, w, h = bbox
+            if c_y == candidate[0]:
+                char = c
+                break
+
+        # 只取第一個出來定位，不然怕定位好第一個後找不到下一個，會引起錯誤
+        # char = list(detect_temp.keys())[0]
 
         while True:
             if self.debug:
@@ -192,16 +202,17 @@ class Level1:
 
                 # 判斷左右是否需要調整
                 if not self.hor_middle_point - self.hor_error_range <= c_x <= self.hor_middle_point + self.hor_error_range:
+                    delay_time = abs(c_x - self.hor_middle_point) / 150 + 0.35
                     if c_x > self.hor_middle_point:
-                        self.uart_api.send_order(direction='d', value=str(self.velocity_baseline))
+                        self.uart_api.send_order(direction='d', value=str(self.velocity_baseline + 5))
                         if self.debug:
                             print('Move Right')
                     else:
-                        self.uart_api.send_order(direction='a', value=str(self.velocity_baseline))
+                        self.uart_api.send_order(direction='a', value=str(self.velocity_baseline + 5))
                         if self.debug:
                             print('Move Left')
 
-                    time.sleep(0.2)
+                    time.sleep(delay_time)
                     self.uart_api.send_order(direction='p')
                     hor_correct = False
                 else:
@@ -209,6 +220,7 @@ class Level1:
 
                 # 判斷前後是否需要調整
                 if not self.ver_middle_point - self.ver_error_range <= c_y <= self.ver_middle_point + self.ver_error_range:
+                    delay_time = abs(c_y - self.ver_middle_point) / 150 + 0.35
                     if c_y > self.ver_middle_point:
                         self.uart_api.send_order(direction='s', value=str(self.velocity_baseline))
 
@@ -220,7 +232,7 @@ class Level1:
                         if self.debug:
                             print('Move Front')
 
-                    time.sleep(0.2)
+                    time.sleep(delay_time)
                     self.uart_api.send_order(direction='p')
                     ver_correct = False
                 else:
@@ -236,6 +248,7 @@ class Level1:
                     return
             except:
                 print('Something Error')
+
 
     # =====夾取方塊=====
     def _grip_cube(self):
