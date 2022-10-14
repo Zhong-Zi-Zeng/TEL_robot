@@ -27,8 +27,10 @@ class Level1:
         self.distance_threshold = rospy.get_param('/DistanceThreshold')  # 檢測最遠離閥值
         self.check_distance_threshold = rospy.get_param('/CheckDistanceThreshold')  # 檢測最遠離閥值
         self.turn_degree = rospy.get_param('/TurnDegree')  # 找不到方框時調整機器人的角度
-        self.hor_middle_point = rospy.get_param('/HorMiddlePoint')  # 水平中心點
-        self.ver_middle_point = rospy.get_param('/VerMiddlePoint')  # 垂直中心點
+        self.side_hor_middle_point = rospy.get_param('/SideHorMiddlePoint')  # 側邊水平中心點
+        self.side_ver_middle_point = rospy.get_param('/SideVerMiddlePoint')  # 側邊垂直中心點
+        self.top_hor_middle_point = rospy.get_param('/TopHorMiddlePoint')  # 上方水平中心點
+        self.top_ver_middle_point = rospy.get_param('/TopVerMiddlePoint')  # 上方垂直中心點
         self.hor_error_range = rospy.get_param('/HorErrorRange')  # 在夾取方塊時允許的水平誤差範圍
         self.ver_error_range = rospy.get_param('/VerErrorRange')  # 在夾取方塊時允許的垂直誤差範圍
 
@@ -141,25 +143,21 @@ class Level1:
         elif self.now_direction == 'front':
             self.uart_api.send_order(degree=str(self.turn_degree))
             self.now_direction = 'right'
-            self.uart_api.send_special_order(action='z')
 
         # 由後向右轉
         elif self.now_direction == 'back':
             self.uart_api.send_order(degree=str(180 + self.turn_degree))
             self.now_direction = 'back right'
-            self.uart_api.send_special_order(action='z')
 
         # 由前向左轉
         elif self.now_direction == 'right':
             self.uart_api.send_order(degree=str(360 - self.turn_degree))
             self.now_direction = 'left'
-            self.uart_api.send_special_order(action='z')
 
         # 由後向左轉
         elif self.now_direction == 'bake right':
             self.uart_api.send_order(degree=str(180 - self.turn_degree))
             self.now_direction = 'back left'
-            self.uart_api.send_special_order(action='z')
 
         # 定位到方框後
         elif self.now_direction != 'bake left':
@@ -167,6 +165,7 @@ class Level1:
             self.now_direction = 'back'
             return
 
+        self.debug.debug_info('Now direction is ', self.now_direction)
         self.uart_api.send_special_order(action='z')
 
     # =====定位機器人夾取方塊=====
@@ -193,9 +192,10 @@ class Level1:
             now_detect = self._find_TEL()
             try:
                 c_x, c_y, w, h = now_detect[char]
+                hor_middle_point, ver_middle_point = self._check_point(c_x, c_y)
 
                 # 判斷左右是否需要調整
-                if not self.hor_middle_point - self.hor_error_range <= c_x <= self.hor_middle_point + self.hor_error_range:
+                if not hor_middle_point - self.hor_error_range <= c_x <= hor_middle_point + self.hor_error_range:
                     delay_time = abs(c_x - self.hor_middle_point) / 150 + 0.35
                     if c_x > self.hor_middle_point:
                         self.uart_api.send_order(direction='d', value=str(self.velocity_baseline + 5))
@@ -211,7 +211,7 @@ class Level1:
                     hor_correct = True
 
                 # 判斷前後是否需要調整
-                if not self.ver_middle_point - self.ver_error_range <= c_y <= self.ver_middle_point + self.ver_error_range:
+                if not ver_middle_point - self.ver_error_range <= c_y <= ver_middle_point + self.ver_error_range:
                     delay_time = abs(c_y - self.ver_middle_point) / 150 + 0.35
                     if c_y > self.ver_middle_point:
                         self.uart_api.send_order(direction='s', value=str(self.velocity_baseline))
@@ -235,9 +235,23 @@ class Level1:
                     return
             except:
                 self.debug.debug_info('Something Error')
+                break
 
+    #===== 判斷偵測到的方塊的正上方還是側邊，設定不同的中心點=====
+    def _check_point(self, c_x, c_y):
+        # 取得偵測點的距離
+        dis = self._get_distance(c_x, c_y)
 
-    # =====夾取方塊=====
+        # 取得偵測點上方的距離
+        up_dis = self._get_distance(c_x, c_y - 20)
+
+        # 判斷偵測到的方塊的正上方還是側邊
+        if up_dis > dis:
+            return self.top_hor_middle_point, self.top_ver_middle_point
+        else:
+            return self.side_hor_middle_point, self.side_ver_middle_point
+
+    # =====夾取方塊
     def _grip_cube(self):
         # 先停止機器人
         self.uart_api.send_order(direction='p')

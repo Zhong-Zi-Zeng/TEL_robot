@@ -12,6 +12,5 @@ class Debug:
 
         print(info)
         for arg in args:
-            print(arg, end=" ")
-        print()
+            print arg,
 

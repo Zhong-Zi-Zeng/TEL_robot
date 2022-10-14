@@ -9,8 +9,10 @@ VelocityBaseline: 20 # Velocity lower limit
 DistanceThreshold: 32 # Detect distance threshold
 CheckDistanceThreshold: 20 # Check have grip cube
 TurnDegree: 43 # When can't detect TEL the robot will turn this degree
-HorMiddlePoint: 500 # Camera horizontal middle point for align cube
-VerMiddlePoint: 410 # Camera vertical middle point for align cube
+SideHorMiddlePoint: 500 # Camera horizontal middle point for side point
+SideVerMiddlePoint: 410 # Camera vertical middle point for side point
+TopHorMiddlePoint: 500 # Camera horizontal middle point for top point
+TopVerMiddlePoint: 380 # Camera horizontal middle point for top point
 HorErrorRange: 12 # Allowable horizontal error when positioning
 VerErrorRange: 12 # Allowable vertical error when positioning
 
