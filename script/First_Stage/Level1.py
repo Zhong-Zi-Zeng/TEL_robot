@@ -2,6 +2,7 @@
 # -*- coding: UTF-8 -*-
 from Yolo_V4_Api import Detect
 from Uart_Api import UartApi
+from Debug import Debug
 import rospy
 import time
 
@@ -17,8 +18,10 @@ class Level1:
         # 初始化Uart Api
         self.uart_api = UartApi()
 
+        # 初始話Debug
+        self.debug = Debug()
+
         # 載入參數
-        self.debug = rospy.get_param('/Debug')  # Debug模式
         self.detect_limit = rospy.get_param('/DetectLimit')  # 檢測次數上限
         self.velocity_baseline = rospy.get_param('/VelocityBaseline')  # 最低速度基準線
         self.distance_threshold = rospy.get_param('/DistanceThreshold')  # 檢測最遠離閥值
@@ -81,9 +84,7 @@ class Level1:
 
             # 前往第二關
             self.uart_api.send_special_order(action='j')
-
-            if self.debug:
-                print('Go to Level 2!')
+            self.debug.debug_info('Go to Level 2!')
 
             return True
 
@@ -115,24 +116,21 @@ class Level1:
     def _filter_detect_temp(self, detect_temp):
         copy_detect_temp = detect_temp.copy()
 
-        if self.debug:
-            print('Original detect temp:', detect_temp)
-            print('Filter out the too-far cube.')
+        self.debug.debug_info('Original detect temp:', detect_temp)
+        self.debug.debug_info('Filter out the too-far cube')
 
         for key in detect_temp.keys():
             distance = self._get_distance(c_x=detect_temp[key][0], c_y=detect_temp[key][1])
             if distance > self.distance_threshold or self.TEL_state[key]:
                 del copy_detect_temp[key]
 
-        if self.debug:
-            print('Now detect temp:', copy_detect_temp)
+        self.debug.debug_info('Now detect temp:', copy_detect_temp)
 
         return copy_detect_temp
 
     # =====校正機器人=====
     def _correction_robot(self):
-        if self.debug:
-            print('Can not find TEL, modify robot direction.')
+        self.debug.debug_info('Can not find TEL, modify robot direction.')
 
         # 一開始定位到方框前
         if self.now_direction == "initial":
@@ -189,12 +187,8 @@ class Level1:
                 char = c
                 break
 
-        # 只取第一個出來定位，不然怕定位好第一個後找不到下一個，會引起錯誤
-        # char = list(detect_temp.keys())[0]
-
         while True:
-            if self.debug:
-                print('Gripping {} cube'.format(char))
+            self.debug.debug_info('Localization ', char, 'cube')
 
             now_detect = self._find_TEL()
             try:
@@ -205,12 +199,10 @@ class Level1:
                     delay_time = abs(c_x - self.hor_middle_point) / 150 + 0.35
                     if c_x > self.hor_middle_point:
                         self.uart_api.send_order(direction='d', value=str(self.velocity_baseline + 5))
-                        if self.debug:
-                            print('Move Right')
+                        self.debug.debug_info('Move Right')
                     else:
                         self.uart_api.send_order(direction='a', value=str(self.velocity_baseline + 5))
-                        if self.debug:
-                            print('Move Left')
+                        self.debug.debug_info('Move Left')
 
                     time.sleep(delay_time)
                     self.uart_api.send_order(direction='p')
@@ -223,14 +215,10 @@ class Level1:
                     delay_time = abs(c_y - self.ver_middle_point) / 150 + 0.35
                     if c_y > self.ver_middle_point:
                         self.uart_api.send_order(direction='s', value=str(self.velocity_baseline))
-
-                        if self.debug:
-                            print('Move Back')
+                        self.debug.debug_info('Move Back')
                     else:
                         self.uart_api.send_order(direction='w', value=str(self.velocity_baseline))
-
-                        if self.debug:
-                            print('Move Front')
+                        self.debug.debug_info('Move Front')
 
                     time.sleep(delay_time)
                     self.uart_api.send_order(direction='p')
@@ -240,14 +228,13 @@ class Level1:
 
                 # 夾取方塊
                 if hor_correct and ver_correct:
-                    if self.debug:
-                        print('Positioning completed start grip {}'.format(char))
+                    self.debug.debug_info('Positioning completed start grip', char)
 
                     if self._grip_cube():
                         self.TEL_state[char] = True
                     return
             except:
-                print('Something Error')
+                self.debug.debug_info('Something Error')
 
 
     # =====夾取方塊=====
@@ -256,8 +243,7 @@ class Level1:
         self.uart_api.send_order(direction='p')
 
         # 將爪子定位到吸取位置
-        if self.debug:
-            print('Positioning arm...')
+        self.debug.debug_info('Positioning arm...')
 
         motor1_degree = self.init_motor1_degree
         motor2_degree = self.init_motor2_degree
@@ -272,17 +258,15 @@ class Level1:
             time.sleep(0.01)
 
         # 吸取方塊
-        if self.debug:
-            print('Gripping cube...')
+        self.debug.debug_info('Gripping cube...')
         self.uart_api.send_special_order(action='a')
         time.sleep(0.5)
 
         # 確認是否有吸到方塊，沒有成功吸取則重新定位手臂並把幫補關掉
-        if self.debug:
-            print('Check cube...')
+        self.debug.debug_info('Check cube...')
         successfully = self._check_grip_cube()
         if not successfully:
-            print('Grip failed..')
+            self.debug.debug_info('Grip failed..')
             self.uart_api.send_order()
             time.sleep(0.5)
             self.uart_api.send_special_order(action='b')
@@ -302,14 +286,12 @@ class Level1:
             time.sleep(0.02)
 
         # 釋放方塊
-        if self.debug:
-            print('Put down cube')
+        self.debug.debug_info('Put down cube')
         self.uart_api.send_special_order(action='b')
 
         time.sleep(0.5)
         # 重新定位手臂到初始位置
-        if self.debug:
-            print('Reset arm')
+        self.debug.debug_info('Reset arm')
         self.uart_api.send_order(motor_1=str(self.init_motor1_degree), motor_2=str(self.init_motor2_degree))
         return True
 
@@ -331,7 +313,7 @@ class Level1:
 
         time.sleep(1)
         distance = self._get_distance(320, 122)
-        print(distance)
+        self.debug.debug_info("Check distance:", distance)
 
         if distance > self.check_distance_threshold:
             return False
