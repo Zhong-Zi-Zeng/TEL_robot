@@ -57,7 +57,7 @@ class Level1:
 
             # 偵測達到上限後若暫存區依舊為空則先將機器人往左擺動後重新判斷
             # 還是為空再向右擺動判斷，還是為空則將機器人定位到方框後
-            if len(detect_temp) == 0 and self.now_direction != 'bake left':
+            if len(detect_temp) == 0 and self.now_direction != 'back left':
                 self._correction_robot()
                 continue
 
@@ -94,8 +94,7 @@ class Level1:
     def _find_TEL(self):
         detect_temp = {}
 
-        if self.debug:
-            print('Find TEL....')
+        self.debug.debug_info('Find TEL....')
 
         img = self.img_queue.get_img()
         detections = self.network.detect_image(img)
@@ -109,8 +108,7 @@ class Level1:
             else:
                 detect_temp[label] = [c_x, c_y, w, h]
 
-        if self.debug:
-            print('Find result:', detect_temp.keys())
+        self.debug.debug_info('Find result:', detect_temp.keys())
 
         return detect_temp
 
@@ -138,6 +136,7 @@ class Level1:
         if self.now_direction == "initial":
             # self.uart_api.send_special_order(action='e')
             self.now_direction = 'front'
+            return
 
         # 由前向右轉
         elif self.now_direction == 'front':
@@ -155,17 +154,17 @@ class Level1:
             self.now_direction = 'left'
 
         # 由後向左轉
-        elif self.now_direction == 'bake right':
+        elif self.now_direction == 'back right':
             self.uart_api.send_order(degree=str(180 - self.turn_degree))
             self.now_direction = 'back left'
 
         # 定位到方框後
-        elif self.now_direction != 'bake left':
+        elif self.now_direction == 'left':
             self.uart_api.send_special_order(action='f')
             self.now_direction = 'back'
             return
 
-        self.debug.debug_info('Now direction is ', self.now_direction)
+        self.debug.debug_info('Now direction is', self.now_direction)
         self.uart_api.send_special_order(action='z')
 
     # =====定位機器人夾取方塊=====
@@ -186,18 +185,19 @@ class Level1:
                 char = c
                 break
 
+        hor_middle_point, ver_middle_point = self._check_point(c_x, c_y)
+
         while True:
-            self.debug.debug_info('Localization ', char, 'cube')
+            self.debug.debug_info('Localization', char, 'cube')
 
             now_detect = self._find_TEL()
             try:
                 c_x, c_y, w, h = now_detect[char]
-                hor_middle_point, ver_middle_point = self._check_point(c_x, c_y)
 
                 # 判斷左右是否需要調整
                 if not hor_middle_point - self.hor_error_range <= c_x <= hor_middle_point + self.hor_error_range:
-                    delay_time = abs(c_x - self.hor_middle_point) / 150 + 0.35
-                    if c_x > self.hor_middle_point:
+                    delay_time = abs(c_x - hor_middle_point) / 150 + 0.1
+                    if c_x > hor_middle_point:
                         self.uart_api.send_order(direction='d', value=str(self.velocity_baseline + 5))
                         self.debug.debug_info('Move Right')
                     else:
@@ -212,8 +212,8 @@ class Level1:
 
                 # 判斷前後是否需要調整
                 if not ver_middle_point - self.ver_error_range <= c_y <= ver_middle_point + self.ver_error_range:
-                    delay_time = abs(c_y - self.ver_middle_point) / 150 + 0.35
-                    if c_y > self.ver_middle_point:
+                    delay_time = abs(c_y - ver_middle_point) / 150 + 0.1
+                    if c_y > ver_middle_point:
                         self.uart_api.send_order(direction='s', value=str(self.velocity_baseline))
                         self.debug.debug_info('Move Back')
                     else:
@@ -247,8 +247,10 @@ class Level1:
 
         # 判斷偵測到的方塊的正上方還是側邊
         if up_dis > dis:
+            self.debug.debug_info("Top point")
             return self.top_hor_middle_point, self.top_ver_middle_point
         else:
+            self.debug.debug_info("Side point")
             return self.side_hor_middle_point, self.side_ver_middle_point
 
     # =====夾取方塊

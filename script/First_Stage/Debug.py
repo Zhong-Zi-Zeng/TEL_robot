@@ -6,11 +6,10 @@ class Debug:
     def __init__(self):
         self.debug = rospy.get_param('/Debug')  # Debug模式
 
-    def debug_info(self, info, *args):
+    def debug_info(self, *args):
         if not self.debug:
             return
 
-        print(info)
         for arg in args:
             print arg,
-
+        print
