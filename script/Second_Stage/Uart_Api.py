@@ -36,12 +36,3 @@ class UartApi:
         order = '<' + action
         order = list(map(ord, order))
         self.ser.write(order)
-        while True:
-            while self.ser.in_waiting:
-                response = str(self.ser.read().decode('utf-8'))
-
-                if response == 'a':
-                    return True
-                else:
-                    return False
-

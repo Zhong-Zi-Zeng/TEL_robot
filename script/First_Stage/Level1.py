@@ -45,14 +45,17 @@ class Level1:
 
         # 設定變數
         self.now_direction = "initial"  # 紀錄當前機器人方向
+        self.banned_list = []  # 用來存放暫時夾不到的方塊
         self.TEL_state = {'T': False, 'E': False, 'L': False}  # 紀錄TEL文字目前是否已經被夾取
 
     def start(self):
+        self.uart_api.send_special_order(action='n')  # 更新初始角度
+        self.uart_api.send_special_order(action='t')  # 開啟回正
         while True:
             # 尋找有無TEL
             detect_temp = self._find_TEL()
 
-            # 過濾掉太遠的方塊、已經夾到的方塊
+            # 過濾掉太遠的方塊、存在禁止列表中的方塊、已經夾到的方塊
             detect_temp = self._filter_detect_temp(detect_temp)
 
             # 偵測達到上限後若暫存區依舊為空則先將機器人往左擺動後重新判斷
@@ -76,6 +79,8 @@ class Level1:
             # 定位到終點方框
             if 'back' in self.now_direction:
                 self.uart_api.send_special_order(action='h')
+            elif 'side' in self.now_direction:
+                self.uart_api.send_special_order(action='v')
             else:
                 self.uart_api.send_special_order(action='g')
 
@@ -112,7 +117,7 @@ class Level1:
 
         return detect_temp
 
-    # =====判斷物體距離是否大於閥值，若大於閥值則去除掉=====
+    # =====距離太遠、已夾取、存在禁止列表中的方塊都要刪掉====
     def _filter_detect_temp(self, detect_temp):
         copy_detect_temp = detect_temp.copy()
 
@@ -121,7 +126,7 @@ class Level1:
 
         for key in detect_temp.keys():
             distance = self._get_distance(c_x=detect_temp[key][0], c_y=detect_temp[key][1])
-            if distance > self.distance_threshold or self.TEL_state[key]:
+            if distance > self.distance_threshold or self.TEL_state[key] or key in self.banned_list:
                 del copy_detect_temp[key]
 
         self.debug.debug_info('Now detect temp:', copy_detect_temp)
@@ -131,38 +136,61 @@ class Level1:
     # =====校正機器人=====
     def _correction_robot(self):
         self.debug.debug_info('Can not find TEL, modify robot direction.')
+        self.banned_list = []  # 清空禁止列表
 
-        # 一開始定位到方框前
+        # 從起點定位到方框前
         if self.now_direction == "initial":
             # self.uart_api.send_special_order(action='e')
             self.now_direction = 'front'
             return
 
+        # 從前方定位到方框側邊
+        elif self.now_direction == 'front left':
+            self.uart_api.send_special_order(action='u')
+            self.now_direction = 'side'
+            return
+
+        # 從側邊定位到方框後面
+        elif self.now_direction == 'side left':
+            self.uart_api.send_special_order(action='f')
+            self.now_direction = 'back'
+            return
+
         # 由前向右轉
         elif self.now_direction == 'front':
+            self.uart_api.send_special_order(action='o')  # 先將機器人定位到方框前方
             self.uart_api.send_order(degree=str(self.turn_degree))
-            self.now_direction = 'right'
+            self.now_direction = 'front right'
+
+        # 由側邊向右轉
+        elif self.now_direction == 'side':
+            self.uart_api.send_special_order(action='p')  # 先將機器人定位到方框側邊
+            self.uart_api.send_order(degree=str(270 + self.turn_degree))
+            self.now_direction = 'side right'
 
         # 由後向右轉
         elif self.now_direction == 'back':
+            self.uart_api.send_special_order(action='g')  # 先將機器人定位到方框後方
             self.uart_api.send_order(degree=str(180 + self.turn_degree))
             self.now_direction = 'back right'
 
         # 由前向左轉
-        elif self.now_direction == 'right':
+        elif self.now_direction == 'front right':
+            self.uart_api.send_special_order(action='o')  # 先將機器人定位到方框前方
             self.uart_api.send_order(degree=str(360 - self.turn_degree))
-            self.now_direction = 'left'
+            self.now_direction = 'front left'
+
+        # 由側邊向左轉
+        elif self.now_direction == 'side right':
+            self.uart_api.send_special_order(action='p')  # 先將機器人定位到方框側邊
+            self.uart_api.send_order(degree=str(270 - self.turn_degree))
+            self.now_direction = 'side left'
 
         # 由後向左轉
         elif self.now_direction == 'back right':
+            self.uart_api.send_special_order(action='g')  # 先將機器人定位到方框後方
             self.uart_api.send_order(degree=str(180 - self.turn_degree))
             self.now_direction = 'back left'
-
-        # 定位到方框後
-        elif self.now_direction == 'left':
-            self.uart_api.send_special_order(action='f')
-            self.now_direction = 'back'
-            return
 
         self.debug.debug_info('Now direction is', self.now_direction)
         self.uart_api.send_special_order(action='z')
@@ -185,6 +213,7 @@ class Level1:
                 char = c
                 break
 
+        # 判斷看到的點是在上方還是側邊給與不同的定位點
         hor_middle_point, ver_middle_point = self._check_point(c_x, c_y)
 
         while True:
@@ -226,6 +255,18 @@ class Level1:
                 else:
                     ver_correct = True
 
+                # 判斷機器人有沒有撞到方框，若撞到則將此方塊加入到禁止列表中並退出迴圈
+                if self.uart_api.send_special_order(action='m') == False:
+                    self.banned_list.append(char)
+                    self.debug.debug_info('Hit the box and the letter', char, 'is added to the banned list')
+                    break
+
+                # 判斷機器人會不會掉下去，如果會掉下去則放棄此方塊並退出迴圈
+                if self.uart_api.send_special_order(action='r') == False:
+                    self.TEL_state[char] = True
+                    self.debug.debug_info('Falling warring give up the letter', char)
+                    break
+
                 # 夾取方塊
                 if hor_correct and ver_correct:
                     self.debug.debug_info('Positioning completed start grip', char)
@@ -237,7 +278,7 @@ class Level1:
                 self.debug.debug_info('Something Error')
                 break
 
-    #===== 判斷偵測到的方塊的正上方還是側邊，設定不同的中心點=====
+    # ===== 判斷偵測到的方塊的正上方還是側邊，設定不同的中心點=====
     def _check_point(self, c_x, c_y):
         # 取得偵測點的距離
         dis = self._get_distance(c_x, c_y)

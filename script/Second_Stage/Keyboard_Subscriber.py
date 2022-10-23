@@ -5,6 +5,7 @@ from std_msgs.msg import String
 from Uart_Api import UartApi
 import rospy
 
+
 def callback(data_msg):
     data = data_msg.data
     data = data.split(',')
@@ -19,6 +20,7 @@ def callback(data_msg):
     else:
         uart_api.send_special_order(data[0])
 
+
 if __name__ == '__main__':
     # 初始化
     rospy.init_node("keyboard_subscriber")
@@ -26,7 +28,7 @@ if __name__ == '__main__':
     rospy.loginfo('Start keyboard subscriber...')
 
     uart_api = UartApi()
-
+    uart_api.send_special_order(action='s')  # 關閉回正
     # Debug
     debug = rospy.get_param('/Debug')
 
