@@ -22,11 +22,10 @@ class Level1:
         self.debug = Debug()
 
         # 載入參數
-        self.detect_limit = rospy.get_param('/DetectLimit')  # 檢測次數上限
         self.velocity_baseline = rospy.get_param('/VelocityBaseline')  # 最低速度基準線
-        self.distance_threshold = rospy.get_param('/DistanceThreshold')  # 檢測最遠離閥值
         self.check_distance_threshold = rospy.get_param('/CheckDistanceThreshold')  # 檢測最遠離閥值
-        self.turn_degree = rospy.get_param('/TurnDegree')  # 找不到方框時調整機器人的角度
+        self.pan_speed = rospy.get_param('/PanSpeed')  # 找不到方框時調整機器人平移的速度
+        self.pan_time = rospy.get_param('/PanTime')  # 平移時間
         self.side_hor_middle_point = rospy.get_param('/SideHorMiddlePoint')  # 側邊水平中心點
         self.side_ver_middle_point = rospy.get_param('/SideVerMiddlePoint')  # 側邊垂直中心點
         self.top_hor_middle_point = rospy.get_param('/TopHorMiddlePoint')  # 上方水平中心點
@@ -45,6 +44,7 @@ class Level1:
 
         # 設定變數
         self.now_direction = "initial"  # 紀錄當前機器人方向
+        self.now_degree = 0  # 紀錄機器人當前角度
         self.banned_list = []  # 用來存放暫時夾不到的方塊
         self.TEL_state = {'T': False, 'E': False, 'L': False}  # 紀錄TEL文字目前是否已經被夾取
 
@@ -55,7 +55,7 @@ class Level1:
             # 尋找有無TEL
             detect_temp = self._find_TEL()
 
-            # 過濾掉太遠的方塊、存在禁止列表中的方塊、已經夾到的方塊
+            # 過濾掉存在禁止列表中的方塊、已經夾到的方塊
             detect_temp = self._filter_detect_temp(detect_temp)
 
             # 偵測達到上限後若暫存區依舊為空則先將機器人往左擺動後重新判斷
@@ -117,16 +117,13 @@ class Level1:
 
         return detect_temp
 
-    # =====距離太遠、已夾取、存在禁止列表中的方塊都要刪掉====
+    # =====已夾取、存在禁止列表中的方塊都要刪掉====
     def _filter_detect_temp(self, detect_temp):
         copy_detect_temp = detect_temp.copy()
-
-        self.debug.debug_info('Original detect temp:', detect_temp)
         self.debug.debug_info('Filter out the too-far cube')
 
         for key in detect_temp.keys():
-            distance = self._get_distance(c_x=detect_temp[key][0], c_y=detect_temp[key][1])
-            if distance > self.distance_threshold or self.TEL_state[key] or key in self.banned_list:
+            if self.TEL_state[key] or key in self.banned_list:
                 del copy_detect_temp[key]
 
         self.debug.debug_info('Now detect temp:', copy_detect_temp)
@@ -140,60 +137,66 @@ class Level1:
 
         # 從起點定位到方框前
         if self.now_direction == "initial":
-            # self.uart_api.send_special_order(action='e')
+            self.uart_api.send_special_order(action='e')
+            time.sleep(1)
             self.now_direction = 'front'
+            self.now_degree = 0
             return
 
         # 從前方定位到方框側邊
         elif self.now_direction == 'front left':
             self.uart_api.send_special_order(action='u')
             self.now_direction = 'side'
+            self.now_degree = 270
             return
 
         # 從側邊定位到方框後面
         elif self.now_direction == 'side left':
             self.uart_api.send_special_order(action='f')
             self.now_direction = 'back'
+            self.now_degree = 180
             return
 
-        # 由前向右轉
+        # 由前向右平移
         elif self.now_direction == 'front':
             self.uart_api.send_special_order(action='o')  # 先將機器人定位到方框前方
-            self.uart_api.send_order(degree=str(self.turn_degree))
+            self.uart_api.send_order(direction='d', value=str(self.pan_speed), degree=str(0))
             self.now_direction = 'front right'
 
-        # 由側邊向右轉
+        # 由側邊向右平移
         elif self.now_direction == 'side':
             self.uart_api.send_special_order(action='p')  # 先將機器人定位到方框側邊
-            self.uart_api.send_order(degree=str(270 + self.turn_degree))
+            self.uart_api.send_order(direction='d', value=str(self.pan_speed), degree=str(270))
             self.now_direction = 'side right'
 
-        # 由後向右轉
+        # 由後向右平移
         elif self.now_direction == 'back':
             self.uart_api.send_special_order(action='g')  # 先將機器人定位到方框後方
-            self.uart_api.send_order(degree=str(180 + self.turn_degree))
+            self.uart_api.send_order(direction='d', value=str(self.pan_speed), degree=str(180))
             self.now_direction = 'back right'
 
-        # 由前向左轉
+        # 由前向左平移
         elif self.now_direction == 'front right':
             self.uart_api.send_special_order(action='o')  # 先將機器人定位到方框前方
-            self.uart_api.send_order(degree=str(360 - self.turn_degree))
+            self.uart_api.send_order(direction='a', value=str(self.pan_speed), degree=str(0))
             self.now_direction = 'front left'
 
-        # 由側邊向左轉
+        # 由側邊向左平移
         elif self.now_direction == 'side right':
             self.uart_api.send_special_order(action='p')  # 先將機器人定位到方框側邊
-            self.uart_api.send_order(degree=str(270 - self.turn_degree))
+            self.uart_api.send_order(direction='a', value=str(self.pan_speed), degree=str(270))
             self.now_direction = 'side left'
 
-        # 由後向左轉
+        # 由後向左平移
         elif self.now_direction == 'back right':
             self.uart_api.send_special_order(action='g')  # 先將機器人定位到方框後方
-            self.uart_api.send_order(degree=str(180 - self.turn_degree))
+            self.uart_api.send_order(direction='a', value=str(self.pan_speed), degree=str(180))
             self.now_direction = 'back left'
 
         self.debug.debug_info('Now direction is', self.now_direction)
-        self.uart_api.send_special_order(action='z')
+        time.sleep(self.pan_time)  # 平移時間
+        self.uart_api.send_order(direction='p')
+        # self.uart_api.send_special_order(action='z')
 
     # =====定位機器人夾取方塊=====
     def _localization_robot(self, detect_temp):
@@ -227,10 +230,12 @@ class Level1:
                 if not hor_middle_point - self.hor_error_range <= c_x <= hor_middle_point + self.hor_error_range:
                     delay_time = abs(c_x - hor_middle_point) / 150 + 0.1
                     if c_x > hor_middle_point:
-                        self.uart_api.send_order(direction='d', value=str(self.velocity_baseline + 5))
+                        self.uart_api.send_order(direction='d', value=str(self.velocity_baseline + 5),
+                                                 degree=str(self.now_degree))
                         self.debug.debug_info('Move Right')
                     else:
-                        self.uart_api.send_order(direction='a', value=str(self.velocity_baseline + 5))
+                        self.uart_api.send_order(direction='a', value=str(self.velocity_baseline + 5),
+                                                 degree=str(self.now_degree))
                         self.debug.debug_info('Move Left')
 
                     time.sleep(delay_time)
@@ -243,10 +248,12 @@ class Level1:
                 if not ver_middle_point - self.ver_error_range <= c_y <= ver_middle_point + self.ver_error_range:
                     delay_time = abs(c_y - ver_middle_point) / 150 + 0.1
                     if c_y > ver_middle_point:
-                        self.uart_api.send_order(direction='s', value=str(self.velocity_baseline))
+                        self.uart_api.send_order(direction='s', value=str(self.velocity_baseline),
+                                                 degree=str(self.now_degree))
                         self.debug.debug_info('Move Back')
                     else:
-                        self.uart_api.send_order(direction='w', value=str(self.velocity_baseline))
+                        self.uart_api.send_order(direction='w', value=str(self.velocity_baseline),
+                                                 degree=str(self.now_degree))
                         self.debug.debug_info('Move Front')
 
                     time.sleep(delay_time)
@@ -382,4 +389,7 @@ class Level1:
         depth_img = self.img_queue.get_depth_img()
         distance = depth_img[c_y, c_x]
 
-        return distance
+        if distance == 0:
+            return 100
+        else:
+            return distance

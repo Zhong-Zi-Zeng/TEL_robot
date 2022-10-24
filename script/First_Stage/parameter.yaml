@@ -4,11 +4,10 @@ TestMode: false
 TestLevel: 1
 
 # ======For Find TEL======
-DetectLimit: 17 # Detect times limit
 VelocityBaseline: 20 # Velocity lower limit
-DistanceThreshold: 32 # Detect distance threshold
 CheckDistanceThreshold: 20 # Check have grip cube
-TurnDegree: 20 # When can't detect TEL the robot will turn this degree
+PanSpeed: 30 # When can't detect TEL the robot will pan this speed
+PanTime: 0.5 # Pan time
 SideHorMiddlePoint: 500 # Camera horizontal middle point for side point
 SideVerMiddlePoint: 410 # Camera vertical middle point for side point
 TopHorMiddlePoint: 500 # Camera horizontal middle point for top point
