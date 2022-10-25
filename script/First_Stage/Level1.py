@@ -195,7 +195,7 @@ class Level1:
 
         self.debug.debug_info('Now direction is', self.now_direction)
         time.sleep(self.pan_time)  # 平移時間
-        self.uart_api.send_order(direction='p')
+        self.uart_api.send_order(direction='p', degree=str(self.now_degree))
         # self.uart_api.send_special_order(action='z')
 
     # =====定位機器人夾取方塊=====
@@ -239,7 +239,7 @@ class Level1:
                         self.debug.debug_info('Move Left')
 
                     time.sleep(delay_time)
-                    self.uart_api.send_order(direction='p')
+                    self.uart_api.send_order(direction='p', degree=str(self.now_degree))
                     hor_correct = False
                 else:
                     hor_correct = True
@@ -257,7 +257,7 @@ class Level1:
                         self.debug.debug_info('Move Front')
 
                     time.sleep(delay_time)
-                    self.uart_api.send_order(direction='p')
+                    self.uart_api.send_order(direction='p', degree=str(self.now_degree))
                     ver_correct = False
                 else:
                     ver_correct = True
@@ -304,7 +304,7 @@ class Level1:
     # =====夾取方塊
     def _grip_cube(self):
         # 先停止機器人
-        self.uart_api.send_order(direction='p')
+        self.uart_api.send_order(direction='p', degree=str(self.now_degree))
 
         # 將爪子定位到吸取位置
         self.debug.debug_info('Positioning arm...')
@@ -312,12 +312,12 @@ class Level1:
         motor1_degree = self.init_motor1_degree
         motor2_degree = self.init_motor2_degree
         while motor1_degree != self.grip_motor1_degree:
-            self.uart_api.send_order(motor_1=str(motor1_degree), motor_2=str(motor2_degree))
+            self.uart_api.send_order(motor_1=str(motor1_degree), motor_2=str(motor2_degree), degree=str(self.now_degree))
             motor1_degree -= 1
             time.sleep(0.01)
 
         while motor2_degree != self.grip_motor2_degree:
-            self.uart_api.send_order(motor_1=str(motor1_degree), motor_2=str(motor2_degree))
+            self.uart_api.send_order(motor_1=str(motor1_degree), motor_2=str(motor2_degree), degree=str(self.now_degree))
             motor2_degree -= 1
             time.sleep(0.01)
 
@@ -340,12 +340,12 @@ class Level1:
         motor1_degree = self.check_motor1_degree
         motor2_degree = self.check_motor2_degree
         while motor2_degree != self.release_motor2_degree:
-            self.uart_api.send_order(motor_1=str(motor1_degree), motor_2=str(motor2_degree))
+            self.uart_api.send_order(motor_1=str(motor1_degree), motor_2=str(motor2_degree), degree=str(self.now_degree))
             motor2_degree += 1
             time.sleep(0.02)
 
         while motor1_degree != self.release_motor1_degree:
-            self.uart_api.send_order(motor_1=str(motor1_degree), motor_2=str(motor2_degree))
+            self.uart_api.send_order(motor_1=str(motor1_degree), motor_2=str(motor2_degree), degree=str(self.now_degree))
             motor1_degree -= 1
             time.sleep(0.02)
 
@@ -356,7 +356,7 @@ class Level1:
         time.sleep(0.5)
         # 重新定位手臂到初始位置
         self.debug.debug_info('Reset arm')
-        self.uart_api.send_order(motor_1=str(self.init_motor1_degree), motor_2=str(self.init_motor2_degree))
+        self.uart_api.send_order(motor_1=str(self.init_motor1_degree), motor_2=str(self.init_motor2_degree), degree=str(self.now_degree))
         return True
 
     # =====確認是否夾到方塊方塊=====
@@ -366,12 +366,12 @@ class Level1:
         motor2_degree = self.grip_motor2_degree
 
         while motor2_degree != self.check_motor2_degree:
-            self.uart_api.send_order(motor_1=str(motor1_degree), motor_2=str(motor2_degree))
+            self.uart_api.send_order(motor_1=str(motor1_degree), motor_2=str(motor2_degree), degree=str(self.now_degree))
             motor2_degree += 1
             time.sleep(0.02)
 
         while motor1_degree != self.check_motor1_degree:
-            self.uart_api.send_order(motor_1=str(motor1_degree), motor_2=str(motor2_degree))
+            self.uart_api.send_order(motor_1=str(motor1_degree), motor_2=str(motor2_degree), degree=str(self.now_degree))
             motor1_degree += 1
             time.sleep(0.02)
 

@@ -8,7 +8,7 @@ from sensor_msgs.msg import Image
 
 def show(img_msgs):
     # img = bridge.imgmsg_to_cv2(img_msgs, 'bgr8')
-    img = np.frombuffer(img_msgs.data, dtype=np.uint8).reshape(img_msgs.height, img_msgs.weidth, -1)
+    img = np.frombuffer(img_msgs.data, dtype=np.uint8).reshape(img_msgs.height, img_msgs.width, -1)
     img = img[:, :, ::-1]
     cv2.imshow('', img)
     cv2.waitKey(1)

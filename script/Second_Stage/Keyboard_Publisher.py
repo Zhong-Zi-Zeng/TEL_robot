@@ -181,7 +181,7 @@ class KeyboardManger:
 
 if __name__ == '__main__':
     # 初始化
-    rospy.init_node("keyboard_publisher")
+    rospy.init_node("keyboard_publisher", anonymous=True)
     pub = rospy.Publisher('keyboard_topic', String, queue_size=1)
     keyboard_manger = KeyboardManger()
 
