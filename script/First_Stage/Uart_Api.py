@@ -46,9 +46,12 @@ class UartApi:
         else:
             while True:
                 while self.ser.in_waiting:
-                    response = str(self.ser.read().decode('utf-8'))
+                    try:
+                        response = str(self.ser.read().decode('utf-8'))
 
-                    if response == 'a':
-                        return True
-                    else:
-                        return False
+                        if response == 'a':
+                            return True
+                        else:
+                            return False
+                    except:
+                        pass

@@ -18,7 +18,8 @@ class ButtonManger:
 
         while True:
             while self.ser.in_waiting:
-                if int(self.ser.read().decode('utf-8')):
+		data = int(self.ser.read().decode('utf-8'))
+                if data:
                     return True
                 return False
 

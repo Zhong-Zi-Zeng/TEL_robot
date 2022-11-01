@@ -49,6 +49,7 @@ class Level1:
         self.TEL_state = {'T': False, 'E': False, 'L': False}  # 紀錄TEL文字目前是否已經被夾取
 
     def start(self):
+	self.debug.debug_info('Level1 Start!')
         self.uart_api.send_special_order(action='n')  # 更新初始角度
         self.uart_api.send_special_order(action='t')  # 開啟回正
         while True:
@@ -76,6 +77,7 @@ class Level1:
             if False in self.TEL_state.values():
                 continue
 
+            self.debug.debug_info('Go to target point!')
             # 定位到終點方框
             if 'back' in self.now_direction:
                 self.uart_api.send_special_order(action='h')
@@ -120,7 +122,7 @@ class Level1:
     # =====已夾取、存在禁止列表中的方塊都要刪掉====
     def _filter_detect_temp(self, detect_temp):
         copy_detect_temp = detect_temp.copy()
-        self.debug.debug_info('Filter out the too-far cube')
+        self.debug.debug_info('Filter out cube')
 
         for key in detect_temp.keys():
             if self.TEL_state[key] or key in self.banned_list:
@@ -133,10 +135,11 @@ class Level1:
     # =====校正機器人=====
     def _correction_robot(self):
         self.debug.debug_info('Can not find TEL, modify robot direction.')
-        self.banned_list = []  # 清空禁止列表
 
         # 從起點定位到方框前
         if self.now_direction == "initial":
+            self.banned_list = []  # 清空禁止列表
+            self.debug.debug_info('Now direction is front.')
             self.uart_api.send_special_order(action='e')
             time.sleep(1)
             self.now_direction = 'front'
@@ -145,6 +148,8 @@ class Level1:
 
         # 從前方定位到方框側邊
         elif self.now_direction == 'front left':
+            self.banned_list = []  # 清空禁止列表
+            self.debug.debug_info('Now direction is side.')
             self.uart_api.send_special_order(action='u')
             self.now_direction = 'side'
             self.now_degree = 270
@@ -152,6 +157,8 @@ class Level1:
 
         # 從側邊定位到方框後面
         elif self.now_direction == 'side left':
+            self.banned_list = []  # 清空禁止列表
+            self.debug.debug_info('Now direction is back.')
             self.uart_api.send_special_order(action='f')
             self.now_direction = 'back'
             self.now_degree = 180
@@ -171,7 +178,7 @@ class Level1:
 
         # 由後向右平移
         elif self.now_direction == 'back':
-            self.uart_api.send_special_order(action='g')  # 先將機器人定位到方框後方
+            self.uart_api.send_special_order(action='q')  # 先將機器人定位到方框後方
             self.uart_api.send_order(direction='d', value=str(self.pan_speed), degree=str(180))
             self.now_direction = 'back right'
 
@@ -189,14 +196,23 @@ class Level1:
 
         # 由後向左平移
         elif self.now_direction == 'back right':
-            self.uart_api.send_special_order(action='g')  # 先將機器人定位到方框後方
+            self.uart_api.send_special_order(action='q')  # 先將機器人定位到方框後方
             self.uart_api.send_order(direction='a', value=str(self.pan_speed), degree=str(180))
             self.now_direction = 'back left'
 
         self.debug.debug_info('Now direction is', self.now_direction)
         time.sleep(self.pan_time)  # 平移時間
         self.uart_api.send_order(direction='p', degree=str(self.now_degree))
+
         # self.uart_api.send_special_order(action='z')
+
+    def reset(self):
+        if ("front" in self.now_direction):
+            self.uart_api.send_special_order(action='o')  # 先將機器人定位到方框前方
+        elif("side" in self.now_direction):
+            self.uart_api.send_special_order(action='p')  # 先將機器人定位到方框側邊
+        else:
+            self.uart_api.send_special_order(action='q')  # 先將機器人定位到方框後方
 
     # =====定位機器人夾取方塊=====
     def _localization_robot(self, detect_temp):
@@ -225,7 +241,7 @@ class Level1:
             now_detect = self._find_TEL()
             try:
                 c_x, c_y, w, h = now_detect[char]
-
+                print(self.now_degree)
                 # 判斷左右是否需要調整
                 if not hor_middle_point - self.hor_error_range <= c_x <= hor_middle_point + self.hor_error_range:
                     delay_time = abs(c_x - hor_middle_point) / 150 + 0.1
@@ -266,13 +282,16 @@ class Level1:
                 if self.uart_api.send_special_order(action='m') == False:
                     self.banned_list.append(char)
                     self.debug.debug_info('Hit the box and the letter', char, 'is added to the banned list')
+                    self.reset()
                     break
 
                 # 判斷機器人會不會掉下去，如果會掉下去則放棄此方塊並退出迴圈
                 if self.uart_api.send_special_order(action='r') == False:
                     self.TEL_state[char] = True
                     self.debug.debug_info('Falling warring give up the letter', char)
+                    self.reset()
                     break
+
 
                 # 夾取方塊
                 if hor_correct and ver_correct:
@@ -331,7 +350,7 @@ class Level1:
         successfully = self._check_grip_cube()
         if not successfully:
             self.debug.debug_info('Grip failed..')
-            self.uart_api.send_order()
+            self.uart_api.send_order(direction='p', degree=str(self.now_degree))
             time.sleep(0.5)
             self.uart_api.send_special_order(action='b')
             return False
