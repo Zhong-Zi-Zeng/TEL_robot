@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
+import time
 
 import serial
 import rospy
@@ -28,6 +29,7 @@ class UartApi:
         order = '[' + direction + value + degree + motor_1 + motor_2
         order = list(map(ord, order))
         self.ser.write(order)
+        time.sleep(0.01)
 
     # ======傳送特殊指令======
     def send_special_order(self, action):

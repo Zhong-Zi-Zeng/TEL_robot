@@ -3,7 +3,7 @@
 
 import serial
 import rospy
-
+import time
 
 class UartApi:
     def __init__(self):
@@ -30,6 +30,7 @@ class UartApi:
 
         order = '[' + direction + value + degree + motor_1 + motor_2
         order = list(map(ord, order))
+        time.sleep(0.01)
 
         self.ser.write(order)
 

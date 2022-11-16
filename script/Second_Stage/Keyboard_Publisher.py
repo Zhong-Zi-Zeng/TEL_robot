@@ -176,6 +176,7 @@ class KeyboardManger:
             self.control_arm()
             order = [self.direction, str(self.speed), str(self.motor0_degree), str(self.motor1_degree)]
             pub.publish(','.join(order))
+            print("motor_1:", self.motor0_degree, " motor_2:", self.motor1_degree)
             time.sleep(0.01)
 
 
