@@ -111,6 +111,7 @@ class Level1:
                 self.uart_api.send_special_order(action='g')
 
             # 疊方塊
+            self.now_degree = 0
             self._stack_cube()
 
             # 前往第二關
@@ -343,18 +344,21 @@ class Level1:
             # 對離機器人最近的方塊進行定位並記錄為第一個方塊
             detect_temp = self._find_TEL()
             first_cube = self._find_nearer_cube(detect_temp)
-            first_cube_char = list(first_cube.keys())[0]
-            result = self._localization_robot(first_cube)
-            if result:
-                if self._grip_cube():
-                    # 吸著方塊
-                    self.TEL_state[first_cube_char] = True
-                    self._control_motor2(target_angel=78)
-                    self._control_motor1(target_angel=90)
-                    break
-                else:
-                    self.TEL_state[first_cube_char] = False
-                    continue
+            try:
+                first_cube_char = list(first_cube.keys())[0]
+                result = self._localization_robot(first_cube)
+                if result:
+                    if self._grip_cube():
+                        # 吸著方塊
+                        self.TEL_state[first_cube_char] = True
+                        self._control_motor2(target_angel=78)
+                        self._control_motor1(target_angel=90)
+                        break
+                    else:
+                        self.TEL_state[first_cube_char] = False
+                        continue
+            except:
+                self.debug.debug_info("Can't Find First Cube")
 
         # 尋找下一個方塊並進行定位->將方塊放置在上方
         self.now_state = "put_cube_1"
@@ -362,20 +366,24 @@ class Level1:
             self.debug.debug_info("Position Second Cube")
             detect_temp = self._find_TEL()
             next_cube = self._find_nearer_cube(detect_temp)
-            next_cube_char = list(first_cube.keys())[0]
-            result = self._localization_robot(next_cube)
+            try:
 
-            if result:
-                # 放下第一個方塊
-                self.debug.debug_info('Put down cube')
-                self._control_motor1(target_angel=115)
-                self._control_motor2(target_angel=34)
-                time.sleep(2)
-                self.TEL_state[next_cube_char] = True
-                self.uart_api.send_special_order(action='b')
-                self._control_motor1(target_angel=self.init_motor1_degree)
-                self._control_motor2(target_angel=self.init_motor2_degree)
-                break
+                next_cube_char = list(first_cube.keys())[0]
+                result = self._localization_robot(next_cube)
+
+                if result:
+                    # 放下第一個方塊
+                    self.debug.debug_info('Put down cube')
+                    self._control_motor1(target_angel=115)
+                    self._control_motor2(target_angel=34)
+                    time.sleep(2)
+                    self.TEL_state[next_cube_char] = True
+                    self.uart_api.send_special_order(action='b')
+                    self._control_motor1(target_angel=self.init_motor1_degree)
+                    self._control_motor2(target_angel=self.init_motor2_degree)
+                    break
+            except:
+                self.debug.debug_info("Can't Find Second Cube")
 
     # ===== 判斷偵測到的方塊的正上方還是側邊，設定不同的中心點=====
     def _check_point(self, c_x, c_y):

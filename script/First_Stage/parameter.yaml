@@ -7,20 +7,20 @@ TestLevel: 1
 VelocityBaseline: 20 # Velocity lower limit
 CheckDistanceThreshold: 20 # Check have grip cube
 PanSpeed: 30 # When can't detect TEL the robot will pan this speed
-PanTime: 1 # Pan time
+PanTime: 2 # Pan time
 SideHorMiddlePoint: 500 # Camera horizontal middle point for side point
 SideVerMiddlePoint: 410 # Camera vertical middle point for side point
 TopHorMiddlePoint: 500 # Camera horizontal middle point for top point
 TopVerMiddlePoint: 350 # Camera horizontal middle point for top point
-HorErrorRange: 12 # Allowable horizontal error when positioning
-VerErrorRange: 12 # Allowable vertical error when positioning
+HorErrorRange: 10 # Allowable horizontal error when positioning
+VerErrorRange: 10 # Allowable vertical error when positioning
 
 InitMotor1Degree: 115  # Initial motor1 degree
 InitMotor2Degree: 110  # Initial motor2 degree
 CheckMotor1Degree: 148 # Check out cube motor1 degree
 CheckMotor2Degree: 70 # Check out cube motor2 degree
 GripMotor1Degree: 112 # Grip cube motor1 degree
-GripMotor2Degree: 9 # Grip cube motor2 degree
+GripMotor2Degree: 7 # Grip cube motor2 degree
 ReleaseMotor1Degree: 0 # Release cube motor1 degree
 ReleaseMotor2Degree: 90 # Release cube motor2 degree
 
