@@ -11,7 +11,7 @@ PanTime: 2 # Pan time
 SideHorMiddlePoint: 500 # Camera horizontal middle point for side point
 SideVerMiddlePoint: 410 # Camera vertical middle point for side point
 TopHorMiddlePoint: 500 # Camera horizontal middle point for top point
-TopVerMiddlePoint: 350 # Camera horizontal middle point for top point
+TopVerMiddlePoint: 320 # Camera horizontal middle point for top point
 HorErrorRange: 10 # Allowable horizontal error when positioning
 VerErrorRange: 10 # Allowable vertical error when positioning
 

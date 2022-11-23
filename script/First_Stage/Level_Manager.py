@@ -6,6 +6,9 @@ from Image_Callback import ImageCallback
 from Level1 import Level1
 from Level2 import Level2
 from Level3 import Level3
+from Uart_Api import UartApi
+from Debug import Debug
+import time
 import rospy
 
 
@@ -16,6 +19,12 @@ class LevelManager:
 
         # 初始化影像佇列物件
         self.img_queue = ImageCallback()
+
+        # uart
+        self.uart_api = UartApi()
+
+        # Debug
+        self.debug = Debug()
 
         # Test mode
         self.test_mode = rospy.get_param('/TestMode')
@@ -45,15 +54,20 @@ class LevelManager:
         while not rospy.is_shutdown():
             # 判斷關卡按鈕有沒有被按下
             if self.button_manger.read_level1_start():
-                if self.level1_finish == False:
+                self.debug.debug_info("Wait...")
+                time.sleep(3)
+                if self.button_manger.read_level2_start():
+                    self.debug.debug_info("To Level2")
+                    self.uart_api.send_special_order(action='j')
+                elif not self.level1_finish:
                     self.level1_finish = True if self.level1.start() else False
 
             if self.button_manger.read_level2_start() or self.level1_finish:
-                if self.level2_finish == False:
+                if not self.level2_finish:
                     self.level2_finish = True if self.level2.start(self.level1_finish) else False
 
             if self.button_manger.read_level3_start() or self.level2_finish:
-                if self.level3_finish == False:
+                if not self.level3_finish:
                     self.level3_finish = True if self.level3.start(self.level2_finish) else False
 
 if __name__ == '__main__':

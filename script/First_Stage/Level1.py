@@ -130,9 +130,9 @@ class Level1:
 
         for label, _, bbox in detections:
             c_x, c_y, w, h = list(map(int, bbox))
-            # 如果有重複的話只存放離機身較近的那點
+            # 如果有重複的話只存放離機身較遠的那點
             if label in detect_temp.keys():
-                detect_temp[label] = [c_x, c_y, w, h] if c_y > detect_temp[label][1] else detect_temp[label]
+                detect_temp[label] = [c_x, c_y, w, h] if c_y < detect_temp[label][1] else detect_temp[label]
             else:
                 detect_temp[label] = [c_x, c_y, w, h]
 
@@ -261,6 +261,9 @@ class Level1:
         # 判斷看到的點是在上方還是側邊給與不同的定位點
         hor_middle_point, ver_middle_point = self._check_point(nearer_cube[char][0], nearer_cube[char][1])
 
+        # 偵測次數
+        detect_count = 0
+
         while True:
             self.debug.debug_info('Localization', char, 'cube')
 
@@ -331,8 +334,12 @@ class Level1:
                     self.debug.debug_info('Positioning completed start grip', char)
                     return True
             except:
+                detect_count += 1
                 self.debug.debug_info('Something Error')
-                return False
+                if detect_count == 5:
+                    return False
+                else:
+                    continue
 
     # =====疊起方塊=====
     def _stack_cube(self):
@@ -426,9 +433,10 @@ class Level1:
         successfully = self._check_grip_cube()
         if not successfully:
             self.debug.debug_info('Grip failed..')
-            self.motor1_now_degree = self.init_motor1_degree
-            self.motor2_now_degree = self.init_motor2_degree
-            self.uart_api.send_order(direction='p', degree=str(self.now_degree))
+            self._control_motor2(target_angel=self.init_motor2_degree)
+            self._control_motor1(target_angel=self.init_motor1_degree)
+            self.uart_api.send_order(direction='p', degree=str(self.now_degree), motor_1=str(self.motor1_now_degree),
+                                     motor_2=str(self.motor2_now_degree))
             time.sleep(0.2)
             self.uart_api.send_special_order(action='b')
             return False
@@ -441,10 +449,16 @@ class Level1:
         self._control_motor1(target_angel=self.check_motor1_degree)
 
         time.sleep(1)
-        distance = self._get_distance(320, 122)
-        self.debug.debug_info("Check distance:", distance)
+        x_location = np.linspace(250, 350, 6)
+        distance = []
 
-        if distance > self.check_distance_threshold:
+        for x in x_location:
+            distance.append(self._get_distance(int(x), 122))
+
+        min_distance = np.min(distance)
+        self.debug.debug_info("Check distance:", min_distance)
+
+        if min_distance > self.check_distance_threshold:
             return False
 
         return True
